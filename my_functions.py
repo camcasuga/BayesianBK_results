@@ -20,8 +20,8 @@ def my_cut_array(l_limit, u_limit, basis):
     indeces = np.where((basis >= l_limit) & (basis <= u_limit))[0]
     return indeces
 
-def get_exp_experr_xb(boolean, dataframe):
-    return np.array(dataframe['sigma_r'][boolean]), np.array(dataframe['error'][boolean]), np.array(dataframe['xbj'][boolean])
+# def get_exp_experr_xb(boolean, dataframe):
+#     return np.array(dataframe['sigma_r'][boolean]), np.array(dataframe['error'][boolean]), np.array(dataframe['xbj'][boolean])
 
 def get_cor_columns():
     
@@ -43,7 +43,7 @@ def get_cor_columns():
     return cor_sys
 
 # construct error covariance matrix from data uncertainties: systematic + statistical and correlated
-def construct_relcov(exp_df): # take labelled exp_df
+def construct_cov(exp_df): # take labelled exp_df
 
     ''' Function that returns the relative covariance matrix of the experimental data
         Input: exp_df, pandas dataframe of experimental data with columns'''
@@ -87,14 +87,15 @@ def load_exp(filename, Q2_llimit = 2.0, Q2_ulimit = 50.0, correlated = False):
     exp_df['cor_wo_proc'] = np.sqrt((exp_df['ignore'])**2 - (exp_df['uncor_tot'])**2) # total correlated uncertainties without procedural
     cor_err = np.array(exp_df[get_cor_columns()])
     exp_df['cor_tot'] = np.sqrt(np.sum(cor_err**2, axis = 1)) # total correlated uncertainties
-
+    # cov = construct_cov(exp_df)
+    # sd = np.sqrt(np.diagonal(cov))
     if correlated == False:
         #exp_err = np.sqrt((exp_df['ignore'].values)**2)
         # to include procedural: 
         exp_err = np.sqrt((exp_df['cor_tot'].values)**2 + (exp_df['uncor_tot'].values)**2)
         return exp_df, exp, exp_err, xbj
     if correlated == True:
-        return exp_df, exp, construct_relcov(exp_df), xbj # returns covariance
+        return exp_df, exp, construct_cov(exp_df), xbj # returns covariance
 
 
 def load_training_data(train_file, theta_file):

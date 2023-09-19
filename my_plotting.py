@@ -25,18 +25,18 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'ytick.direction': 'in',})
 
 
-def plot_model_vs_exp(q2s, ss, model_values, exp_df, title_ = None, splots = 1):
+def plot_model_vs_exp(q2s, ss, model_values, exp_df, exp_err, title_ = None, splots = 1, correlated = False):
     fig, ax = plt.subplots(1,splots,  figsize = (8,6), sharey = True, sharex = True)
     
     for j in range(len(q2s)):
         q2 = q2s[j]
         Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
         Q2_indeces = exp_df.index[Q2_region].tolist()
-        dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
-        # exp_df_region = exp_df[Q2_region]
-        # dat = np.array(exp_df_region['sigma_r'])
-        # dat_err = np.array(exp_df_region['error'])
-        # xb = np.array(exp_df_region['xbj'])
+        exp_df_region = exp_df[Q2_region]
+        dat = np.array(exp_df_region['sigma_r'])
+        dat_err_cons = np.sqrt(exp_err.diagonal()) if correlated == True else exp_err
+        dat_err = dat_err_cons[Q2_indeces]
+        xb = np.array(exp_df_region['xbj'])
  
         for i in range(len(model_values)):
             model = [ model_values[i,qq2] for qq2 in Q2_indeces]
@@ -66,11 +66,9 @@ def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, median_values, splots
         q2 = q2s[j]
         Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
         Q2_indeces = exp_df.index[Q2_region].tolist()
-        dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
-        # exp_df_region = exp_df[Q2_region]
-        # dat = np.array(exp_df_region['sigma_r'])
-        # dat_err = np.array(exp_df_region['error'])
-        # xb = np.array(exp_df_region['xbj'])
+        exp_df_region = exp_df[Q2_region]
+        dat = np.array(exp_df_region['sigma_r'])
+        xb = np.array(exp_df_region['xbj'])
 
         for i in range(len(map_values)):
             model = [map_values[i,qq2] for qq2 in Q2_indeces]
@@ -98,7 +96,6 @@ def plot_model_vs_exp_wtrain(q2, ss, model_values, exp_df, training_set_all, spl
     fig, ax = plt.subplots(1,splots, figsize = (16, 6), sharey = True, sharex = True)
     Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
     Q2_indeces = exp_df.index[Q2_region].tolist()
-    dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
     # exp_df_region = exp_df[Q2_region]
     # dat = np.array(exp_df_region['sigma_r'])
     # dat_err = np.array(exp_df_region['error'])
@@ -160,8 +157,17 @@ def plot_diagonal(pred, true):
     for i in range(403):
         ax.plot(true[:,i], pred[:,i], '.', color = 'orange', alpha = 0.5)
 
-    ax.set_xlabel("Emulator")
-    ax.set_ylabel("Model")
+    ax.set_xlabel("Model")
+    ax.set_ylabel("Emulator")
+    return fig, ax
+
+def plot_diagonal_1(pred, true):
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
+    ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
+    ax.plot(true, pred, 'x', color = 'orange', alpha = 0.5)
+    ax.set_xlabel("Model")
+    ax.set_ylabel("Emulator")
     return fig, ax
 
 def fit_gaussian(to_fit):
