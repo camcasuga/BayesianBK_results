@@ -1,0 +1,405 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
+import pandas as pd
+import seaborn as sns
+from matplotlib.ticker import LogLocator
+from my_functions import *
+import corner
+import itertools
+from scipy.optimize import minimize
+from IPython.display import display, Math
+
+#colors  = ['orange', 'purple', 'yellow', 'pink', 'red','cyan', 'maroon', 'teal', 'green']
+colors = sns.color_palette("Paired")
+plt.rcdefaults()
+plt.rcParams.update({'xtick.labelsize': 16,
+                     'ytick.labelsize': 16,
+                     'axes.labelsize': 24,
+                     'axes.titlesize': 24,
+                     'legend.fontsize': 14,
+                     'legend.title_fontsize': 14,
+                     #'figure.autolayout': True,
+                     'xtick.direction': 'in',
+                     'ytick.direction': 'in',})
+
+
+def plot_model_vs_exp(q2s, ss, model_values, exp_df, title_ = None, splots = 1):
+    fig, ax = plt.subplots(1,splots,  figsize = (8,6), sharey = True, sharex = True)
+    
+    for j in range(len(q2s)):
+        q2 = q2s[j]
+        Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
+        Q2_indeces = exp_df.index[Q2_region].tolist()
+        dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
+        # exp_df_region = exp_df[Q2_region]
+        # dat = np.array(exp_df_region['sigma_r'])
+        # dat_err = np.array(exp_df_region['error'])
+        # xb = np.array(exp_df_region['xbj'])
+ 
+        for i in range(len(model_values)):
+            model = [ model_values[i,qq2] for qq2 in Q2_indeces]
+            if i == 0:
+                ax.plot(xb, model, alpha = 0.8, linewidth = 1.0, color = colors[j], label = "${}$".format((q2)))
+            else:
+                ax.plot(xb, model, alpha = 0.5, linewidth = 0.3, color = colors[j])
+                
+        if j == 0:
+            ax.errorbar(xb, dat, yerr = dat_err, color = 'black', fmt = '.', label = "Data")        
+        else:
+            ax.errorbar(xb, dat, yerr = dat_err, color = 'black', fmt = '.')
+
+
+    ax.set_xlabel("$x_{bj}$")
+    ax.set_ylabel("$\sigma_r$ (mb)")
+    # set y and x label font sizes
+    ax.set_xscale('log')
+    ax.set_xlim = (10e-6, 10e-1) 
+    ax.set_ylim = (0.4, 1.6)
+    ax.set_title(str(title_))
+    return fig, ax
+
+def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, median_values, splots = 1):
+    fig, ax = plt.subplots(1,splots, figsize = (8,6), sharey = True, sharex = True)
+    for j in range(len(q2s)):
+        q2 = q2s[j]
+        Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
+        Q2_indeces = exp_df.index[Q2_region].tolist()
+        dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
+        # exp_df_region = exp_df[Q2_region]
+        # dat = np.array(exp_df_region['sigma_r'])
+        # dat_err = np.array(exp_df_region['error'])
+        # xb = np.array(exp_df_region['xbj'])
+
+        for i in range(len(map_values)):
+            model = [map_values[i,qq2] for qq2 in Q2_indeces]
+            ax.plot(xb, model, '--', alpha = 0.9, color = colors[j], label = "MAP estimates")
+
+        for i in range(len(median_values)):
+            model = [median_values[i,qq2] for qq2 in Q2_indeces]
+            ax.plot(xb, model, alpha = 0.5, color = colors[j], label = " Posterior median")
+
+    # for i in range(len(median_values_low)):
+    #     modellow = [median_values_low[i,qq2] for qq2 in Q2_indeces]
+    #     modelhigh = [median_values_high[i,qq2] for qq2 in Q2_indeces]
+    #     plt.fill_between(xb, modellow, modelhigh, alpha = 0.4, label = "{} credible region".format(confidence))
+    
+        ax.errorbar(xb, dat, yerr = dat_err, color = 'black', fmt = '.', label = "HERA Data")
+    
+    #plt.title(r"$Q^2 = {} $".format((q2)) + r" GeV$^2$; $\sqrt{s}$" + " = {} GeV".format(ss))   
+    ax.set_xlabel("$x_{bj}$")
+    ax.set_ylabel("$\sigma_r$")
+    ax.set_xscale('log') 
+    #plt.legend()
+    return plt.show()
+
+def plot_model_vs_exp_wtrain(q2, ss, model_values, exp_df, training_set_all, splots = 2):
+    fig, ax = plt.subplots(1,splots, figsize = (16, 6), sharey = True, sharex = True)
+    Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
+    Q2_indeces = exp_df.index[Q2_region].tolist()
+    dat, dat_err, xb = get_exp_experr_xb(Q2_region, exp_df)
+    # exp_df_region = exp_df[Q2_region]
+    # dat = np.array(exp_df_region['sigma_r'])
+    # dat_err = np.array(exp_df_region['error'])
+    # xb = np.array(exp_df_region['xbj'])
+    
+
+    for i in range(len(model_values)):
+        model = [model_values[i,qq2] for qq2 in Q2_indeces]
+        ax[1].plot(xb, model, alpha = 0.3, color = 'orange',linewidth = 0.5)
+        if i == len(model_values)-1:
+            ax[1].plot(xb, model, alpha = 0.9, color = 'orange', linewidth = 0.5, label = "Posterior Samples") 
+    
+    ax[1].plot(np.average(model))
+        
+    for i in range(len(training_set_all)):
+        train = [training_set_all[i,qq2] for qq2 in Q2_indeces]
+        ax[0].plot(xb, train, alpha = 0.5, color = 'orange', linewidth = 0.5)
+        if i == len(training_set_all)-1:
+            ax[0].plot(xb, train, alpha = 0.9, color = 'orange', linewidth = 0.5, label = "Training Data")
+
+    for i in range(splots):
+        ax[i].errorbar(xb, dat, yerr = dat_err, color = 'black',  fmt = '.', alpha = 0.7, label = "HERA Data")
+        ax[i].set_title("$Q^2$ = {} GeV$^{}$; ".format(q2, 2) + "$\sqrt{s}$ = " + str(ss) + " GeV", fontsize = 20)
+        ax[i].set_xlabel("$x_{bj}$")
+        ax[i].set_ylabel("$\sigma_r$")
+        ax[i].set_xscale('log') 
+        ax[i].legend()
+    return fig, ax
+
+def scatter_hist(a, b, ax, ax_histx, ax_histy, params_all, param_names):
+    x = params_all[:,a]
+    y = params_all[:,b]
+    ax_histx.tick_params(axis="x", labelbottom=False)
+    ax_histy.tick_params(axis="y", labelleft=False)
+    ax.scatter(x, y, color = 'b')
+    ax.set_xlabel(param_names[a])
+    ax.set_ylabel(param_names[b])
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    ax_histx.hist(x, bins=10, alpha=0.7, color = 'b')
+    ax_histy.hist(y, bins=10, orientation='horizontal', alpha=0.7, color = 'b')
+
+def plot_validation_perkp(kp, pred, pred_err, training_set_all, exp, n_params, params_all, param_names):
+
+    fig, ax = plt.subplots(1, n_params, sharey = True, figsize=(16,4))
+    for i in range(0,n_params):
+        ax[i].errorbar(params_all[:,i], pred[:,kp], fmt = '.', yerr = pred_err[:,kp], label = "GPE Prediction on Train")
+        ax[i].plot(params_all[:,i], pred[:,kp], '.', color = 'b', label = "GPE Prediction on Train")
+        ax[i].plot(params_all[:,i], training_set_all[:,kp], 'rx', label = 'Test')
+        ax[i].axhline(exp[kp],  color = 'r', linestyle = '--', label = 'HERA value')
+        ax[i].set_title(param_names[i])
+    
+    return fig, ax
+
+def plot_diagonal(pred, true):
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
+    ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
+
+    for i in range(403):
+        ax.plot(true[:,i], pred[:,i], '.', color = 'orange', alpha = 0.5)
+
+    ax.set_xlabel("Emulator")
+    ax.set_ylabel("Model")
+    return fig, ax
+
+def fit_gaussian(to_fit):
+    from scipy.stats import norm
+    mu, std = norm.fit(to_fit)
+    x = np.linspace(mu - 3*std, mu + 3*std, 100)
+    gauss = norm.pdf(x, mu, std)
+    return x, gauss
+
+def plot_zscore(pred, true, sd): 
+    from scipy.stats import norm
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    z = np.array([(pred[:,kp] - true[:,kp])/sd[:,kp] for kp in range(403)])
+
+    # fit gaussian to z
+    x_fit, gauss_fit = fit_gaussian(z.flatten())
+
+    # target gaussian
+    mu = 0
+    variance = 1
+    sigma = np.sqrt(variance)
+    x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+    gauss = norm.pdf(x, mu, sigma)
+
+    # plot
+    ax.hist(z.flatten(), bins = 30, density = True, color = 'g', alpha = 0.5, label = "Emulator")
+    ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
+    ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
+    ax.set_xlabel("z-score")
+    ax.legend()
+    return fig, ax
+
+def display_median(paramsamples, param_names):
+
+    for i in range(len(param_names)):
+        mcmc = np.percentile(paramsamples[:, i], [16, 50, 84])
+        q = np.diff(mcmc)
+        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+        txt = txt.format(mcmc[1], q[0], q[1], param_names[i])
+        return display(Math(txt))
+
+def display_MAP(paramsamples, param_names, l_bounds, u_bounds, emulators, exp, exp_err, correlated = False):
+    posterior_median = np.median(paramsamples, axis = 0)
+    for i in range(len(param_names)):
+        MAP = minimize(lambda theta: -log_posterior(theta, l_bounds, u_bounds, emulators, exp, exp_err, correlated = correlated), posterior_median);
+        txt = "\mathrm{{{1}}} = {0:.3f}"
+        txt = txt.format(MAP.x, param_names[i])
+        return display(Math(txt))
+
+def get_posterior_mean_and_std(xb, q2, ss, model_values, exp_df):
+    xb_region  = (exp_df['xbj'] == xb) & (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
+    xb_index = exp_df.index[xb_region].tolist()
+    model_values_for_each_xb = model_values[:,xb_index]
+    return np.mean(model_values_for_each_xb, axis = 0), np.std(model_values_for_each_xb, axis = 0)
+
+def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, title_ = None, legend1_loc = "upper right"):
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    mean_line = Line2D([0], [0], color='black')
+    mean_patch = mpatches.Patch(color='gray', alpha = 0.8)
+    #map_line = Line2D([0], [0], color='black', linestyle = ':')
+    handles_ = [(mean_patch, mean_line),]
+
+    for j in range(len(q2s)):
+        q2 = q2s[j]
+        Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
+        Q2_indeces = exp_df.index[Q2_region].tolist()
+        exp_df_region = exp_df[Q2_region]
+        dat = np.array(exp_df_region['sigma_r'])
+        dat_err = np.array(exp_df_region['error'])
+        xb = np.array(exp_df_region['xbj'])
+
+        sr_mean = []
+        sr_std = []
+        for xbj in xb:
+            sr_mean_, sr_std_ = get_posterior_mean_and_std(xbj, q2, ss, model_values, exp_df)
+            sr_mean.append(sr_mean_)
+            sr_std.append(sr_std_)
+        
+        sr_mean = np.array(sr_mean)
+        sr_std = np.array(sr_std)
+        up_std = np.array(sr_mean + 2*sr_std).reshape((-1,))
+        down_std = (sr_mean - 2*sr_std).reshape((-1,))
+        plt_dat = ax.errorbar(xb, dat, yerr = dat_err, color = 'black', fmt = '.', capsize = 3.0)#, label = "Data")  
+        
+        if j == 0:
+            handles_.append(plt_dat)
+        
+        plt_mean, = ax.plot(xb, sr_mean, '-', color = colors[j], label  = "{}".format(q2), lw = 1.0)
+        plt_std = ax.fill_between(xb, up_std, down_std, alpha = 0.5, color = colors[j])#, label = "2 sigma band")
+        
+        #ax.legend(handles = [(plt_mean, plt_std)], labels =["mean + uncertainty"], title = "$Q^2$ (GeV$^2$)", bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+        # for i in range(len(map_values)):
+        #     model = [map_values[i,qq2] for qq2 in Q2_indeces]
+        #     plt.plot(xb, model, ':', alpha = 0.8, color = 'black')
+    
+    legend_1 = plt.legend(title = "$Q^2$ (GeV$^2$)", loc = legend1_loc)#, loc='lower left', borderaxespad=0.  )
+    legend_2 = plt.legend(handles= handles_, 
+                          labels = ["Posterior Mean + 2$\sigma$", "HERA data"], 
+                          loc = "upper left") #,  bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize = 14)
+    ax.add_artist(legend_1)
+    ax.add_artist(legend_2)
+    ax.set_xlabel("$x_{bj}$")
+    ax.set_ylabel("$\sigma_r$")
+    ax.set_xscale('log')
+    x_major = LogLocator(base = 10.0, numticks = 5)
+    ax.xaxis.set_major_locator(x_major)
+    ax.set_title(str(title_))
+    return fig, ax
+
+def plot_corner(mve_samples, mv5_samples, param_names):
+    hm = [0.06, 18.9, 7.2, 16.36, 1.0]
+    from scipy.ndimage import gaussian_filter
+    plt.rcdefaults()
+    plt.rcParams.update({'xtick.direction': 'out',
+                         'ytick.direction': 'out',
+                         'axes.labelsize': 28,
+                         'xtick.labelsize': 22,
+                         'ytick.labelsize': 22,
+                         'axes.linewidth': 2.0,
+                         'axes.labelpad': 11.0,
+                         'xtick.major.size': 10,
+                         'ytick.major.size': 10,
+                         'xtick.major.width': 2,
+                         'ytick.major.width': 2,
+                         })
+
+
+    fig, axes = plt.subplots(5,5, 
+                             figsize = (25,25), 
+                             constrained_layout = False,
+                             )
+    plt.subplots_adjust(wspace = 0.07, hspace = 0.07)
+
+    # axes limits
+    range0 = [0.045, 0.105]
+    range1 = [9.5, 60.0]
+    range2 = [2.2, 8.0]
+    range3 = [12.8, 16.6]
+    range4 = [0.97, 1.05]
+    xranges = np.array([range0, range1, range2, range3, range4])
+    
+    for i in range(5):
+        axes[i,i].tick_params(which='major', labelrotation=35)
+        if i == 4:
+            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], 
+                                       bins = 30, 
+                                       density = True)
+            n_mv5 = gaussian_filter(n_mv5, sigma = 1.5)
+            axes[i,i].plot(bins_mv5[1:].flatten(), 
+                           n_mv5, 
+                           color = 'b', 
+                           linewidth = 3.0,)
+            
+            axes[i,i].set_xlim(xranges[i])
+            axes[i,i].set_ylim([0.0,None])
+            axes[i,i].axvline(1.0, color = 'r', linestyle = '-', linewidth = 4.0)
+
+        else:
+            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], 
+                                       bins = 30, 
+                                       density = True,)
+            n_mv5 = gaussian_filter(n_mv5, sigma = 1.5)
+            axes[i,i].plot(bins_mv5[1:].flatten(), 
+                           n_mv5, 
+                           color = 'b', 
+                           linewidth = 3.0,)
+            
+            n_mve, bins_mve = np.histogram(mve_samples[:,i], 
+                                       bins = 30, 
+                                       density = True,)
+            n_mve = gaussian_filter(n_mve, sigma = 1.5)
+            axes[i,i].plot(bins_mve[1:].flatten(), 
+                           n_mve, 
+                           color = 'r', 
+                           linewidth = 3.0,)
+            axes[i,i].set_xlim(xranges[i])
+            axes[i,i].set_ylim([0.0,None])
+
+        for j in range(i):
+            corner.hist2d(mve_samples[:,i],
+                          mve_samples[:,j], 
+                          ax = axes[j,i], 
+                          bins = 50, 
+                          color = 'r',
+                          smooth = 2.0,
+                          plot_datapoints = True,
+                          plot_density = True)
+            axes[j,i].set_xlim(xranges[i])
+            axes[j,i].set_ylim(xranges[j])
+            axes[j,i].tick_params(which='major', labelrotation=35)
+            corner.hist2d(mv5_samples[:,j],
+                          mv5_samples[:,i], 
+                          ax = axes[i,j], 
+                          bins = 50, 
+                          color = 'b',
+                          smooth = 2.0,
+                          plot_datapoints = True,
+                          plot_density = True)
+            axes[i,j].set_xlim(xranges[j])
+            axes[i,j].set_ylim(xranges[i])
+            axes[i,j].tick_params(which='major', labelrotation=35)
+        
+    for i in range(5):
+        axes[i,i].axvline(hm[i], color = 'g', linestyle = ':', linewidth = 4.0)    
+    
+    for i in range(1,3):
+        for j in range(5):
+            axes[j,i].set_yticklabels([])
+            axes[j,i].tick_params(which='major', axis = 'y', size = 0)
+
+    axes[4,3].set_yticklabels([])
+    axes[4,3].tick_params(which='major', axis = 'y', size = 0)
+    axes[4,4].set_yticklabels([])
+    axes[4,4].tick_params(which='major', axis = 'y', size = 0)
+    axes[0,0].set_yticklabels([])
+    axes[0,0].tick_params(which='major', axis = 'y', size = 0)
+
+    for i in range(1,5):
+        axes[i,0].set_ylabel(param_names[i])
+        axes[i-1,3].set_ylabel(param_names[i-1])
+        #axes[i-1,3].set_yticklabels([])
+        axes[i-1,3].yaxis.set_label_position("right")
+        axes[i-1,3].yaxis.tick_right()
+        #axes[0,3].set_ylabel(param_names[0])
+        #axes[0,3].yaxis.set_label_position("right")
+        fig.delaxes(axes[i-1,4])
+    
+    # manually removing and arranging tick positions and axis labels
+    for i in range(5):
+        axes[4,i].set_xlabel(param_names[i])
+        axes[0,i].set_xlabel(param_names[i])
+        axes[0,i].xaxis.set_label_position("top")
+        axes[0,i].xaxis.tick_top()
+        for j in range(1,4):
+            axes[j,i].set_xticklabels([])
+            axes[j,i].tick_params(which='major', axis = 'x', size = 0)
+    
+    axes[3,3].set_ylabel("")
+    axes[3,3].set_yticklabels([])
+    axes[3,3].tick_params(which='major', axis = 'y', size = 0)
+    return fig, axes
