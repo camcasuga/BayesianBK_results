@@ -24,6 +24,40 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
+def plot_corner(theta, param_names):
+    fig = corner.corner(
+        theta,
+        labels = param_names,
+        weights= np.ones(len(posterior_parameters_all))/len(posterior_parameters_all),
+        #quantiles=[0.0, 0.5, 1.00],
+        #show_titles = True, # 
+        #title_fmt = '.3f',
+        #title_kwargs={"fontsize": 12}, 
+        color = 'b',
+        bins = 30,
+        smooth1d = True,
+        smooth = True,
+        verbose = True,
+        plot_density = True,
+        plot_datapoints = False,
+        fillcontours = False)
+    return fig, corner
+
+def plot_corner_tocompare(theta_tocompare, fig, corner):
+    corner.corner(theta_tocompare,
+                  weights= np.ones(len(theta_tocompare))/len(theta_tocompare),
+                  fig = fig,
+                  bins = 30,
+                  #show_titles = True, # 
+                  #title_fmt = '.3f',
+                  #title_kwargs={"fontsize": 12}, 
+                  color = 'r',
+                  smooth1d = True,
+                  smooth = True,
+                  verbose = True,
+                  plot_density = True,
+                  plot_datapoints = False,
+                  fillcontours = False);
 
 def plot_model_vs_exp(q2s, ss, model_values, exp_df, exp_err, title_ = None, splots = 1, correlated = False):
     fig, ax = plt.subplots(1,splots,  figsize = (8,6), sharey = True, sharex = True)
@@ -60,7 +94,7 @@ def plot_model_vs_exp(q2s, ss, model_values, exp_df, exp_err, title_ = None, spl
     ax.set_title(str(title_))
     return fig, ax
 
-def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, median_values, splots = 1):
+def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, exp_err, median_values, splots = 1, correlated = False):
     fig, ax = plt.subplots(1,splots, figsize = (8,6), sharey = True, sharex = True)
     for j in range(len(q2s)):
         q2 = q2s[j]
@@ -68,6 +102,8 @@ def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, median_values, splots
         Q2_indeces = exp_df.index[Q2_region].tolist()
         exp_df_region = exp_df[Q2_region]
         dat = np.array(exp_df_region['sigma_r'])
+        dat_err_cons = np.sqrt(exp_err.diagonal()) if correlated == True else exp_err
+        dat_err = dat_err_cons[Q2_indeces]
         xb = np.array(exp_df_region['xbj'])
 
         for i in range(len(map_values)):
@@ -92,14 +128,15 @@ def plot_exp_vs_map_vs_median(q2s, ss, map_values, exp_df, median_values, splots
     #plt.legend()
     return plt.show()
 
-def plot_model_vs_exp_wtrain(q2, ss, model_values, exp_df, training_set_all, splots = 2):
+def plot_model_vs_exp_wtrain(q2, ss, model_values, exp_df, exp_err, training_set_all, splots = 2, correlated = False):
     fig, ax = plt.subplots(1,splots, figsize = (16, 6), sharey = True, sharex = True)
     Q2_region = (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
     Q2_indeces = exp_df.index[Q2_region].tolist()
-    # exp_df_region = exp_df[Q2_region]
-    # dat = np.array(exp_df_region['sigma_r'])
-    # dat_err = np.array(exp_df_region['error'])
-    # xb = np.array(exp_df_region['xbj'])
+    exp_df_region = exp_df[Q2_region]
+    dat = np.array(exp_df_region['sigma_r'])
+    dat_err_cons = np.sqrt(exp_err.diagonal()) if correlated == True else exp_err
+    dat_err = dat_err_cons[Q2_indeces]
+    xb = np.array(exp_df_region['xbj'])
     
 
     for i in range(len(model_values)):
@@ -223,7 +260,7 @@ def get_posterior_mean_and_std(xb, q2, ss, model_values, exp_df):
     model_values_for_each_xb = model_values[:,xb_index]
     return np.mean(model_values_for_each_xb, axis = 0), np.std(model_values_for_each_xb, axis = 0)
 
-def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, title_ = None, legend1_loc = "upper right"):
+def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = None, legend1_loc = "upper right", correlated = False):
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     mean_line = Line2D([0], [0], color='black')
     mean_patch = mpatches.Patch(color='gray', alpha = 0.8)
@@ -236,7 +273,8 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, title_ = None, leg
         Q2_indeces = exp_df.index[Q2_region].tolist()
         exp_df_region = exp_df[Q2_region]
         dat = np.array(exp_df_region['sigma_r'])
-        dat_err = np.array(exp_df_region['error'])
+        dat_err_cons = np.sqrt(exp_err.diagonal()) if correlated == True else exp_err
+        dat_err = dat_err_cons[Q2_indeces]
         xb = np.array(exp_df_region['xbj'])
 
         sr_mean = []
