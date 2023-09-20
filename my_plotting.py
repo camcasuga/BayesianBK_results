@@ -24,11 +24,11 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
-def plot_corner(theta, param_names):
+def plot_1corner(theta, param_names):
     fig = corner.corner(
         theta,
         labels = param_names,
-        weights= np.ones(len(posterior_parameters_all))/len(posterior_parameters_all),
+        weights= np.ones(len(theta))/len(theta),
         #quantiles=[0.0, 0.5, 1.00],
         #show_titles = True, # 
         #title_fmt = '.3f',
@@ -251,7 +251,7 @@ def display_MAP(paramsamples, param_names, l_bounds, u_bounds, emulators, exp, e
     for i in range(len(param_names)):
         MAP = minimize(lambda theta: -log_posterior(theta, l_bounds, u_bounds, emulators, exp, exp_err, correlated = correlated), posterior_median);
         txt = "\mathrm{{{1}}} = {0:.3f}"
-        txt = txt.format(MAP.x, param_names[i])
+        txt = txt.format(str(MAP.x), param_names[i])
         return display(Math(txt))
 
 def get_posterior_mean_and_std(xb, q2, ss, model_values, exp_df):
