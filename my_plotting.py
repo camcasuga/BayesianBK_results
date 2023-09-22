@@ -24,6 +24,19 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
+# plt.rcParams.update({'xtick.direction': 'out',
+#                          'ytick.direction': 'out',
+#                          'axes.labelsize': 28,
+#                          'xtick.labelsize': 22,
+#                          'ytick.labelsize': 22,
+#                          'axes.linewidth': 2.0,
+#                          'axes.labelpad': 11.0,
+#                          'xtick.major.size': 10,
+#                          'ytick.major.size': 10,
+#                          'xtick.major.width': 2,
+#                          'ytick.major.width': 2,
+#                          })
+
 def plot_1corner(theta, param_names):
     fig = corner.corner(
         theta,
@@ -315,24 +328,14 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
     ax.set_title(str(title_))
     return fig, ax
 
-def plot_corner(mve_samples, mv5_samples, param_names):
+def plot_corner(mve_samples, mv5_samples):
     hm = [0.06, 18.9, 7.2, 16.36, 1.0]
+    param_names = [r"$Q_{s0}^{2}$ [GeV²]",
+               r"$e_c$",
+               r"$C^{2}$",
+               r"$\sigma_0/2$ [mb]",
+               r"$\gamma$",] 
     from scipy.ndimage import gaussian_filter
-    plt.rcdefaults()
-    plt.rcParams.update({'xtick.direction': 'out',
-                         'ytick.direction': 'out',
-                         'axes.labelsize': 28,
-                         'xtick.labelsize': 22,
-                         'ytick.labelsize': 22,
-                         'axes.linewidth': 2.0,
-                         'axes.labelpad': 11.0,
-                         'xtick.major.size': 10,
-                         'ytick.major.size': 10,
-                         'xtick.major.width': 2,
-                         'ytick.major.width': 2,
-                         })
-
-
     fig, axes = plt.subplots(5,5, 
                              figsize = (25,25), 
                              constrained_layout = False,
@@ -359,7 +362,7 @@ def plot_corner(mve_samples, mv5_samples, param_names):
                            color = 'b', 
                            linewidth = 3.0,)
             
-            axes[i,i].set_xlim(xranges[i])
+            #axes[i,i].set_xlim(xranges[i])
             axes[i,i].set_ylim([0.0,None])
             axes[i,i].axvline(1.0, color = 'r', linestyle = '-', linewidth = 4.0)
 
@@ -381,7 +384,7 @@ def plot_corner(mve_samples, mv5_samples, param_names):
                            n_mve, 
                            color = 'r', 
                            linewidth = 3.0,)
-            axes[i,i].set_xlim(xranges[i])
+            #axes[i,i].set_xlim(xranges[i])
             axes[i,i].set_ylim([0.0,None])
 
         for j in range(i):
@@ -393,8 +396,8 @@ def plot_corner(mve_samples, mv5_samples, param_names):
                           smooth = 2.0,
                           plot_datapoints = True,
                           plot_density = True)
-            axes[j,i].set_xlim(xranges[i])
-            axes[j,i].set_ylim(xranges[j])
+            #axes[j,i].set_xlim(xranges[i])
+            #axes[j,i].set_ylim(xranges[j])
             axes[j,i].tick_params(which='major', labelrotation=35)
             corner.hist2d(mv5_samples[:,j],
                           mv5_samples[:,i], 
@@ -404,8 +407,8 @@ def plot_corner(mve_samples, mv5_samples, param_names):
                           smooth = 2.0,
                           plot_datapoints = True,
                           plot_density = True)
-            axes[i,j].set_xlim(xranges[j])
-            axes[i,j].set_ylim(xranges[i])
+            #axes[i,j].set_xlim(xranges[j])
+            #axes[i,j].set_ylim(xranges[i])
             axes[i,j].tick_params(which='major', labelrotation=35)
         
     for i in range(5):
