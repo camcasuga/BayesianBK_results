@@ -24,19 +24,6 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
-# plt.rcParams.update({'xtick.direction': 'out',
-#                          'ytick.direction': 'out',
-#                          'axes.labelsize': 28,
-#                          'xtick.labelsize': 22,
-#                          'ytick.labelsize': 22,
-#                          'axes.linewidth': 2.0,
-#                          'axes.labelpad': 11.0,
-#                          'xtick.major.size': 10,
-#                          'ytick.major.size': 10,
-#                          'xtick.major.width': 2,
-#                          'ytick.major.width': 2,
-#                          })
-
 def plot_1corner(theta, param_names):
     fig = corner.corner(
         theta,
@@ -48,8 +35,8 @@ def plot_1corner(theta, param_names):
         #title_kwargs={"fontsize": 12}, 
         color = 'b',
         bins = 30,
-        smooth1d = True,
-        smooth = True,
+        smooth1d = 1.5,
+        smooth = 1.5,
         verbose = True,
         plot_density = True,
         plot_datapoints = False,
@@ -65,8 +52,8 @@ def plot_corner_tocompare(theta_tocompare, fig, corner):
                   #title_fmt = '.3f',
                   #title_kwargs={"fontsize": 12}, 
                   color = 'r',
-                  smooth1d = True,
-                  smooth = True,
+                  smooth1d = 1.5,
+                  smooth = 1.5,
                   verbose = True,
                   plot_density = True,
                   plot_datapoints = False,
@@ -328,6 +315,19 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
     ax.set_title(str(title_))
     return fig, ax
 
+# plt.rcParams.update({'xtick.direction': 'out',
+#                          'ytick.direction': 'out',
+#                          'axes.labelsize': 28,
+#                          'xtick.labelsize': 22,
+#                          'ytick.labelsize': 22,
+#                          'axes.linewidth': 2.0,
+#                          'axes.labelpad': 11.0,
+#                          'xtick.major.size': 10,
+#                          'ytick.major.size': 10,
+#                          'xtick.major.width': 2,
+#                          'ytick.major.width': 2,
+#                          })
+
 def plot_corner(mve_samples, mv5_samples):
     hm = [0.06, 18.9, 7.2, 16.36, 1.0]
     param_names = [r"$Q_{s0}^{2}$ [GeV²]",
@@ -336,83 +336,80 @@ def plot_corner(mve_samples, mv5_samples):
                r"$\sigma_0/2$ [mb]",
                r"$\gamma$",] 
     from scipy.ndimage import gaussian_filter
+    fig_kw = {'linewidth': 2.0}
     fig, axes = plt.subplots(5,5, 
-                             figsize = (25,25), 
+                             figsize = (18,18),
                              constrained_layout = False,
-                             )
+                             **fig_kw)
     plt.subplots_adjust(wspace = 0.07, hspace = 0.07)
 
+    for i,j in itertools.product(range(5), range(5)):
+        axes[i,j].tick_params(axis='both', 
+                              which='major',
+                              direction = 'out', 
+                              labelsize = 22, 
+                              size = 10, 
+                              width = 2.5, 
+                              pad = 11.0,
+                              )
+        axes[i,j].spines[['left', 'right', 'top', 'bottom']].set_linewidth(2.0)
+
+
     # axes limits
-    range0 = [0.045, 0.105]
-    range1 = [9.5, 60.0]
+    range0 = [0.05, 0.11]
+    range1 = [3.0, 60.0]
     range2 = [2.2, 8.0]
     range3 = [12.8, 16.6]
-    range4 = [0.97, 1.05]
+    range4 = [0.97, 1.08]
     xranges = np.array([range0, range1, range2, range3, range4])
+    hist_plot_kwargs= {'linewidth': 2.5, 'drawstyle': 'steps-mid'}
+    hist_kwargs = {'density': True,
+                   'bins': 30}
+    hist2d_kwargs = {"bins" : 30, 
+                     "smooth" : 1.7,
+                     "plot_datapoints" : True,
+                     "plot_density":True,}
     
     for i in range(5):
         axes[i,i].tick_params(which='major', labelrotation=35)
         if i == 4:
-            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], 
-                                       bins = 30, 
-                                       density = True)
+            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], **hist_kwargs)
             n_mv5 = gaussian_filter(n_mv5, sigma = 1.5)
-            axes[i,i].plot(bins_mv5[1:].flatten(), 
-                           n_mv5, 
-                           color = 'b', 
-                           linewidth = 3.0,)
+            x0 = np.array(list(zip(bins_mv5[:-1], bins_mv5[1:]))).flatten()
+            y0 = np.array(list(zip(n_mv5, n_mv5))).flatten()
+            axes[i,i].plot(x0, y0, color = 'b', **hist_plot_kwargs)
             
-            #axes[i,i].set_xlim(xranges[i])
+            axes[i,i].set_xlim(xranges[i])
             axes[i,i].set_ylim([0.0,None])
-            axes[i,i].axvline(1.0, color = 'r', linestyle = '-', linewidth = 4.0)
+            axes[i,i].axvline(1.0, color = 'r', linestyle = '-', linewidth = 3.0)
 
         else:
-            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], 
-                                       bins = 30, 
-                                       density = True,)
+            n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], **hist_kwargs)
             n_mv5 = gaussian_filter(n_mv5, sigma = 1.5)
-            axes[i,i].plot(bins_mv5[1:].flatten(), 
-                           n_mv5, 
-                           color = 'b', 
-                           linewidth = 3.0,)
+            x0 = np.array(list(zip(bins_mv5[:-1], bins_mv5[1:]))).flatten()
+            y0 = np.array(list(zip(n_mv5, n_mv5))).flatten()
+            axes[i,i].plot(x0, y0, color = 'b', **hist_plot_kwargs)
             
-            n_mve, bins_mve = np.histogram(mve_samples[:,i], 
-                                       bins = 30, 
-                                       density = True,)
+            n_mve, bins_mve = np.histogram(mve_samples[:,i],**hist_kwargs)
             n_mve = gaussian_filter(n_mve, sigma = 1.5)
-            axes[i,i].plot(bins_mve[1:].flatten(), 
-                           n_mve, 
-                           color = 'r', 
-                           linewidth = 3.0,)
-            #axes[i,i].set_xlim(xranges[i])
-            axes[i,i].set_ylim([0.0,None])
+            x02 = np.array(list(zip(bins_mve[:-1], bins_mve[1:]))).flatten()
+            y02 = np.array(list(zip(n_mve, n_mve))).flatten()
+            axes[i,i].plot(x02, y02, color = 'r', **hist_plot_kwargs)
+            axes[i,i].set_xlim(xranges[i])
+            axes[i,i].set_ylim([0.0 , None])
 
         for j in range(i):
-            corner.hist2d(mve_samples[:,i],
-                          mve_samples[:,j], 
-                          ax = axes[j,i], 
-                          bins = 50, 
-                          color = 'r',
-                          smooth = 2.0,
-                          plot_datapoints = True,
-                          plot_density = True)
-            #axes[j,i].set_xlim(xranges[i])
-            #axes[j,i].set_ylim(xranges[j])
+            corner.hist2d(mve_samples[:,i], mve_samples[:,j], ax = axes[j,i], color = 'r', **hist2d_kwargs, contour_kwargs = {'linewidths':2.0})
+            axes[j,i].set_xlim(xranges[i])
+            axes[j,i].set_ylim(xranges[j])
             axes[j,i].tick_params(which='major', labelrotation=35)
-            corner.hist2d(mv5_samples[:,j],
-                          mv5_samples[:,i], 
-                          ax = axes[i,j], 
-                          bins = 50, 
-                          color = 'b',
-                          smooth = 2.0,
-                          plot_datapoints = True,
-                          plot_density = True)
-            #axes[i,j].set_xlim(xranges[j])
-            #axes[i,j].set_ylim(xranges[i])
+            corner.hist2d(mv5_samples[:,j], mv5_samples[:,i], ax = axes[i,j], color = 'b', **hist2d_kwargs, contour_kwargs = {'linewidths':2.0})
+            axes[i,j].set_xlim(xranges[j])
+            axes[i,j].set_ylim(xranges[i])
             axes[i,j].tick_params(which='major', labelrotation=35)
         
     for i in range(5):
-        axes[i,i].axvline(hm[i], color = 'g', linestyle = ':', linewidth = 4.0)    
+        axes[i,i].axvline(hm[i], color = 'g', linestyle = ':', linewidth = 3.0)    
     
     for i in range(1,3):
         for j in range(5):
@@ -427,8 +424,8 @@ def plot_corner(mve_samples, mv5_samples):
     axes[0,0].tick_params(which='major', axis = 'y', size = 0)
 
     for i in range(1,5):
-        axes[i,0].set_ylabel(param_names[i])
-        axes[i-1,3].set_ylabel(param_names[i-1])
+        axes[i,0].set_ylabel(param_names[i], fontsize = 28)
+        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 28)
         #axes[i-1,3].set_yticklabels([])
         axes[i-1,3].yaxis.set_label_position("right")
         axes[i-1,3].yaxis.tick_right()
@@ -438,8 +435,8 @@ def plot_corner(mve_samples, mv5_samples):
     
     # manually removing and arranging tick positions and axis labels
     for i in range(5):
-        axes[4,i].set_xlabel(param_names[i])
-        axes[0,i].set_xlabel(param_names[i])
+        axes[4,i].set_xlabel(param_names[i], fontsize = 28)
+        axes[0,i].set_xlabel(param_names[i], fontsize = 28)
         axes[0,i].xaxis.set_label_position("top")
         axes[0,i].xaxis.tick_top()
         for j in range(1,4):
@@ -450,3 +447,34 @@ def plot_corner(mve_samples, mv5_samples):
     axes[3,3].set_yticklabels([])
     axes[3,3].tick_params(which='major', axis = 'y', size = 0)
     return fig, axes
+
+def plot_pred_mve_vs_mv5(mve_values, mv5_values, x, ylabel, xlabel, title_ = "", legend_loc = "lower right", xlogscale = False, ylogscale = False):
+    ''' 
+    Plot initial dipole shape or 2DFT 
+    Input: mve_values, a list of mean, upper sd, and lower sd values for the mve model
+           mv5_values, a list of mean, upper sd, and lower sd values for the mv5 model    
+    '''
+    mve_usd = mve_values[0] + 2*mve_values[1]
+    mve_dsd = mve_values[0] - 2*mve_values[2]
+    mv5_usd = mv5_values[0] + 2*mv5_values[1]
+    mv5_dsd = mv5_values[0] - 2*mv5_values[2]
+
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    ax.plot(x, mv5_values[0], '--',linewidth = 2, color = "b")
+    ax.fill_between(x, mv5_usd, mv5_dsd, alpha = 0.6, color = "b")
+    ax.plot(x, mve_values[0], '--',linewidth = 2, color = "r")
+    ax.fill_between(x, mve_usd, mve_dsd, alpha = 0.6, color = "r")
+
+    blue_line = Line2D([0], [0], color='b', linestyle='--', linewidth=2)
+    blue_patch = mpatches.Patch(color='b', alpha = 0.6)
+    red_line = Line2D([0], [0], color='r', linestyle='--', linewidth=2)
+    red_patch = mpatches.Patch(color='r', alpha = 0.6)
+    handles_ = [(blue_patch, blue_line),(red_patch, red_line), ]
+    ax.legend(handles= handles_, 
+           labels = ["[$ Q_{s0}^{2}, e_{c}, C^{2}, \sigma_{0}/2, \gamma$]", "[$ Q_{s0}^{2}, e_{c}, C^{2}, \sigma_{0}/2$]"], 
+           loc = legend_loc)
+    ax.set_title(title_)
+    ax.set_xscale("log") if xlogscale else None
+    ax.set_yscale("log") if ylogscale else None
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)

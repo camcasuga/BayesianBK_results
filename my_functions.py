@@ -499,3 +499,31 @@ def get_2DFT_upsd_downsd(Qs02s, gammas, e_cs, k):
         sp_down_sd.append(get_sd(sp_per_k, sp_per_k_mean, which = 'lower'))
     
     return np.array(sp_mean), np.array(sp_up_sd), np.array(sp_down_sd)
+
+def get_iBK_upsd_downsd(Qs02s, gammas, e_cs, rs):
+    iBK_mean = []
+    iBK_up_sd = []
+    iBK_down_sd = []
+    for r in rs:
+        iBK_per_r = [dipp(r, Qs02s[j], gammas[j], e_cs[j]) for j in range(len(Qs02s))]
+        iBK_per_r = np.array(iBK_per_r)
+        iBK_per_r_mean = np.mean(iBK_per_r)
+        iBK_mean.append(iBK_per_r_mean)
+        iBK_up_sd.append(get_sd(iBK_per_r, iBK_per_r_mean, which = 'upper'))
+        iBK_down_sd.append(get_sd(iBK_per_r, iBK_per_r_mean, which = 'lower'))
+    
+    return np.array(iBK_mean), np.array(iBK_up_sd), np.array(iBK_down_sd)
+
+# def plot_initialBK(post_samples_mve, post_samples_mv5):
+#     rs = np.logspace(-2,1,50)
+#     N_all = []
+#     Qs02s_mv50, gammas_mv5, ecs_mv5 = post_samples_mv5[:,0], post_samples_mv5[:,1], post_samples_mv5[:,2]
+#     Qs02s_mve, gammas_mve, ecs_mve = post_samples_mve[:,0], np.ones(1000), post_samples_mve[:,2]
+
+#     for r in rs:
+#         for i in range(1000):
+#             N_mv5 = dipp(r, Qs02s_mv5[i], gammas_mv5[i], ec)
+
+
+#     N = mean
+#     up_sd = get_sd(all_N, )
