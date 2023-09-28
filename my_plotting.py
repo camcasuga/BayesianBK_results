@@ -478,3 +478,5 @@ def plot_pred_mve_vs_mv5(mve_values, mv5_values, x, ylabel, xlabel, title_ = "",
     ax.set_yscale("log") if ylogscale else None
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
+
+    return fig, ax
