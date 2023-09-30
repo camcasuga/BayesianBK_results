@@ -9,6 +9,58 @@ import scipy as sp
 import pickle
 from hankel import HankelTransform
 
+from scipy import interpolate, integrate
+
+def ReadBKDipole(thefile): # 
+    '''Read the dipole amplitude from the given datafile produced running Heikki's BK code
+    
+    Returns an interpolator for the dipole: N(Y, r), where r is in GeV^-1, and x = x_0*exp(Y)
+    
+    Note: as this interpolates in r and not in log r, at very small r there are some small interpolation errors
+    '''
+    with open(thefile) as f:
+        content = f.read().split("###")
+    
+    content = content[1:]   # gets rid of the stuff at the beginning
+    content = [i.split() for i in content] # cleans up lines
+    NrY_data = []
+    pars = []
+    for i in content:
+        '''Separates and sorts the lines in the file
+        
+        Takes values in the beginning of the file to 'pars' list
+        and every Y value with associated N(Y,r) values to 'NrY_data' list
+        '''
+
+        x = list(map(float, i))
+        if len(x) == 1:
+            pars.append(x)
+        else:
+            NrY_data.append(x)
+
+        
+    rmYs = np.array(NrY_data).T[1:]     # removes Y values
+    N_values = rmYs.T
+    Y_values = np.array(NrY_data).T[0]
+
+    pars = np.ndarray.flatten(np.array(pars))
+    minr = pars[0]
+    mult = pars[1]
+    n = int(pars[2])
+    r_values = np.array([minr*mult**i for i in range(n)])
+    
+    
+    rgrid=[]
+    ygrid=[]
+    for y in Y_values:
+        for r in r_values:
+            rgrid.append(r)
+            ygrid.append(y)
+    
+    interpolator = interpolate.CloughTocher2DInterpolator((ygrid, rgrid), N_values.flatten(), fill_value=0)
+    
+    return interpolator
+
 def my_chi2(data, obs, obs_err, npts = 403):
     return np.sum(((data - obs)**2)/obs_err**2)/npts
 
@@ -296,7 +348,6 @@ def return_predictions(emulators, theta, correlated = False):
     B = trans_matrix[npc:]
     var_trans_trunc = np.dot(B.T, B)
     var_trans_trunc.flat[::nkp + 1] += 1e-4 * ss.var_
-
     # inverse transform diagonal covariance matrix
     cov_rpca = invert_cov(cov_prediction, var_trans, nsamples, nkp)
 
@@ -312,6 +363,65 @@ def return_predictions(emulators, theta, correlated = False):
             cov_r = cov_r[0]
         return pred_r, cov_r + var_trans_trunc
 
+def return_predictions_v2(emulators, theta, correlated = False):
+    
+    '''  Function that returns the predictions of the emulators given parameter vectors 
+         Input: emulators, list of TRAINED emulators [gpes, pca, ss]
+                theta, parameter vector (1, n_params) or (n_samples, n_params)
+                correlated, boolean that determines if the covariance matrix is returned (True) or not (False)'''
+
+
+    # load the trained emulator, pca and scaler
+    gpes = emulators[0]
+    pca = emulators[1]
+    ss = emulators[2]
+
+    nsamples = len(theta)
+    npc = len(gpes) # number of principal components
+    nkp = np.shape(ss.scale_)[0] # number of kinematical points
+    
+    mean_prediction = []
+    cov_prediction = []
+    for gpe in gpes: # predicts per principal component: len(gpes) = npc 
+        mean, cov = gpe.predict(theta, return_cov = True)
+        gp_var2 = cov.diagonal()[:, None]
+        mean_prediction.append(mean)
+        cov_prediction.append(gp_var2)
+
+    # Invert Scaling and PCA transform for mean prediction of emulator
+    pred_r = ss.inverse_transform(pca.inverse_transform(np.array(mean_prediction).T))
+    # dim_pred = pred_r.shape[0]
+    
+    # if dim_pred == 1: # if dimension is 1, make it a 1d array
+    #    pred_r = pred_r[1]
+    
+    # Set-up transformation matrix for covariance matrix inversion
+    trans_matrix = pca.components_ * np.sqrt(pca.explained_variance_[:, None]) # explained variance is multiplied due to whitening
+    A = trans_matrix[:npc] 
+    var_trans = np.einsum('ki,kj->kij', A, A, optimize = False).reshape(npc, nkp**2)
+
+    # Add truncation errors
+    # GPE covariance matrix is theoretically positive semi definite but due to numerical implementation it is not
+    # we compute the cov for the remaining principal components 
+    # and add small numbers to the diagonal of the covariance matrix
+
+    B = trans_matrix[npc:]
+    var_trans_trunc = np.dot(B.T, B)
+    var_trans_trunc.flat[::nkp + 1] += 1e-4 * ss.var_
+
+    # inverse transform diagonal covariance matrix
+    cov_rpca = invert_cov(cov_prediction, var_trans, nsamples, nkp)
+    cov_scaled = cov_rpca * ss.scale_[:, None]
+
+    if correlated == False:
+        std_preds = np.sqrt(np.diagonal(cov_scaled, axis1 = 1, axis2 = 2))
+        return pred_r, std_preds
+    
+    elif correlated == True:
+        dim_cov = cov_scaled.shape[0]
+        if dim_cov == 1:
+            cov_scaled = cov_scaled[0]
+        return pred_r, cov_scaled #+ var_trans_trunc
 # log formulas
 
 # log likelihood

@@ -192,17 +192,17 @@ def plot_diagonal(pred, true):
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
 
     for i in range(403):
-        ax.plot(true[:,i], pred[:,i], '.', color = 'orange', alpha = 0.5)
+        ax.plot(true[:,i], pred[:,i], '.', color = 'g', alpha = 0.5)
 
-    ax.set_xlabel("Model")
-    ax.set_ylabel("Emulator")
+    ax.set_xlabel("Model $\sigma_r$")
+    ax.set_ylabel("Emulator $\sigma_r$")
     return fig, ax
 
 def plot_diagonal_1(pred, true):
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
-    ax.plot(true, pred, 'x', color = 'orange', alpha = 0.5)
+    ax.plot(true, pred, 'x', color = 'g', alpha = 0.4)
     ax.set_xlabel("Model")
     ax.set_ylabel("Emulator")
     return fig, ax
@@ -214,7 +214,7 @@ def fit_gaussian(to_fit):
     gauss = norm.pdf(x, mu, std)
     return x, gauss
 
-def plot_zscore(pred, true, sd): 
+def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95): 
     from scipy.stats import norm
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     z = np.array([(pred[:,kp] - true[:,kp])/sd[:,kp] for kp in range(403)])
@@ -230,9 +230,10 @@ def plot_zscore(pred, true, sd):
     gauss = norm.pdf(x, mu, sigma)
 
     # plot
-    ax.hist(z.flatten(), bins = 30, density = True, color = 'g', alpha = 0.5, label = "Emulator")
+    ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
     ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
     ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
+    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes)
     ax.set_xlabel("z-score")
     ax.legend()
     return fig, ax
@@ -356,11 +357,11 @@ def plot_corner(mve_samples, mv5_samples):
 
 
     # axes limits
-    range0 = [0.05, 0.11]
-    range1 = [3.0, 60.0]
-    range2 = [2.2, 8.0]
-    range3 = [12.8, 16.6]
-    range4 = [0.97, 1.08]
+    range0 = [0.045, 0.11]
+    range1 = [2.0, 60.0]
+    range2 = [2.0, 8.5]
+    range3 = [11.8, 16.6]
+    range4 = [0.95, 1.08]
     xranges = np.array([range0, range1, range2, range3, range4])
     hist_plot_kwargs= {'linewidth': 2.5, 'drawstyle': 'steps-mid'}
     hist_kwargs = {'density': True,
