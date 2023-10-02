@@ -9,6 +9,57 @@ import scipy as sp
 import pickle
 from hankel import HankelTransform
 
+from scipy import interpolate, integrate
+def ReadBKDipole(thefile): # 
+    '''Read the dipole amplitude from the given datafile produced running Heikki's BK code
+    
+    Returns an interpolator for the dipole: N(Y, r), where r is in GeV^-1, and x = x_0*exp(Y)
+    
+    Note: as this interpolates in r and not in log r, at very small r there are some small interpolation errors
+    '''
+    with open(thefile) as f:
+        content = f.read().split("###")
+    
+    content = content[1:]   # gets rid of the stuff at the beginning
+    content = [i.split() for i in content] # cleans up lines
+    NrY_data = []
+    pars = []
+    for i in content:
+        '''Separates and sorts the lines in the file
+        
+        Takes values in the beginning of the file to 'pars' list
+        and every Y value with associated N(Y,r) values to 'NrY_data' list
+        '''
+
+        x = list(map(float, i))
+        if len(x) == 1:
+            pars.append(x)
+        else:
+            NrY_data.append(x)
+
+        
+    rmYs = np.array(NrY_data).T[1:]     # removes Y values
+    N_values = rmYs.T
+    Y_values = np.array(NrY_data).T[0]
+
+    pars = np.ndarray.flatten(np.array(pars))
+    minr = pars[0]
+    mult = pars[1]
+    n = int(pars[2])
+    r_values = np.array([minr*mult**i for i in range(n)])
+    
+    
+    rgrid=[]
+    ygrid=[]
+    for y in Y_values:
+        for r in r_values:
+            rgrid.append(r)
+            ygrid.append(y)
+    
+    interpolator = interpolate.CloughTocher2DInterpolator((ygrid, rgrid), N_values.flatten(), fill_value=0)
+    
+    return interpolator
+
 def my_chi2(data, obs, obs_err, npts = 403):
     return np.sum(((data - obs)**2)/obs_err**2)/npts
 
@@ -514,16 +565,21 @@ def get_iBK_upsd_downsd(Qs02s, gammas, e_cs, rs):
     
     return np.array(iBK_mean), np.array(iBK_up_sd), np.array(iBK_down_sd)
 
-# def plot_initialBK(post_samples_mve, post_samples_mv5):
-#     rs = np.logspace(-2,1,50)
-#     N_all = []
-#     Qs02s_mv50, gammas_mv5, ecs_mv5 = post_samples_mv5[:,0], post_samples_mv5[:,1], post_samples_mv5[:,2]
-#     Qs02s_mve, gammas_mve, ecs_mve = post_samples_mve[:,0], np.ones(1000), post_samples_mve[:,2]
+def get_eBK_upsd_downsd(where_bk_folder, rs):
+    mean = []
+    up_sd = []
+    down_sd = []
 
-#     for r in rs:
-#         for i in range(1000):
-#             N_mv5 = dipp(r, Qs02s_mv5[i], gammas_mv5[i], ec)
-
-
-#     N = mean
-#     up_sd = get_sd(all_N, )
+    bk_interpolators = [ReadBKDipole(where_bk_folder + "/{}.dat".format(i)) for i in range(100)]
+    x0 = 0.01 # 10⁻2
+    xbj = 0.0001 # 10⁻5
+    y_int = np.log(x0/xbj)
+    for r in rs:
+        val_per_r = [bk_interpolators[i](y_int, r) for i in range(100)]
+        val_per_r = np.array(val_per_r)
+        val_per_r_mean = np.mean(val_per_r)
+        mean.append(val_per_r_mean)
+        up_sd.append(get_sd(val_per_r, val_per_r_mean, which = 'upper'))
+        down_sd.append(get_sd(val_per_r, val_per_r_mean, which = 'lower'))
+    
+    return np.array(mean), np.array(up_sd), np.array(down_sd)
