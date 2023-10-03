@@ -495,7 +495,7 @@ def return_samples(p0, n_samples, n_burn, sampler):
     return sampler.get_chain(flat = True)
 
 
-# for 2DFT stuff
+# for 2DFT calculation
 # define the function to transform
 
 def dipp(r, Qs02, gamma, e_c): # dipole proton
