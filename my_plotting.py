@@ -16,8 +16,8 @@ colors = sns.color_palette("Paired")
 plt.rcdefaults()
 plt.rcParams.update({'xtick.labelsize': 16,
                      'ytick.labelsize': 16,
-                     'axes.labelsize': 24,
-                     'axes.titlesize': 24,
+                     'axes.labelsize': 40,
+                     'axes.titlesize': 40,
                      'legend.fontsize': 14,
                      'legend.title_fontsize': 14,
                      #'figure.autolayout': True,
@@ -348,10 +348,10 @@ def plot_corner(mve_samples, mv5_samples):
         axes[i,j].tick_params(axis='both', 
                               which='major',
                               direction = 'out', 
-                              labelsize = 22, 
-                              size = 10, 
+                              labelsize = 18, 
+                              size = 8, 
                               width = 2.5, 
-                              pad = 11.0,
+                              pad = 1.0,
                               )
         axes[i,j].spines[['left', 'right', 'top', 'bottom']].set_linewidth(2.0)
 
@@ -425,8 +425,8 @@ def plot_corner(mve_samples, mv5_samples):
     axes[0,0].tick_params(which='major', axis = 'y', size = 0)
 
     for i in range(1,5):
-        axes[i,0].set_ylabel(param_names[i], fontsize = 28)
-        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 28)
+        axes[i,0].set_ylabel(param_names[i], fontsize = 24)
+        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 24)
         #axes[i-1,3].set_yticklabels([])
         axes[i-1,3].yaxis.set_label_position("right")
         axes[i-1,3].yaxis.tick_right()
@@ -436,8 +436,8 @@ def plot_corner(mve_samples, mv5_samples):
     
     # manually removing and arranging tick positions and axis labels
     for i in range(5):
-        axes[4,i].set_xlabel(param_names[i], fontsize = 28)
-        axes[0,i].set_xlabel(param_names[i], fontsize = 28)
+        axes[4,i].set_xlabel(param_names[i], fontsize = 24)
+        axes[0,i].set_xlabel(param_names[i], fontsize = 24)
         axes[0,i].xaxis.set_label_position("top")
         axes[0,i].xaxis.tick_top()
         for j in range(1,4):
