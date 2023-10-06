@@ -347,7 +347,7 @@ def return_predictions_v2(emulators, theta, correlated = False):
 
     B = trans_matrix[npc:]
     var_trans_trunc = np.dot(B.T, B)
-    var_trans_trunc.flat[::nkp + 1] += 1e-4 * ss.var_
+    var_trans_trunc.flat[::nkp + 1] += 1e-8 * ss.var_
     # inverse transform diagonal covariance matrix
     cov_rpca = invert_cov(cov_prediction, var_trans, nsamples, nkp)
 

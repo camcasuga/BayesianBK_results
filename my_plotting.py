@@ -36,7 +36,7 @@ def plot_1corner(theta, param_names):
         color = 'b',
         bins = 30,
         smooth1d = 1.5,
-        smooth = 1.5,
+        smooth = 1.8,
         verbose = True,
         plot_density = True,
         plot_datapoints = False,
@@ -51,9 +51,9 @@ def plot_corner_tocompare(theta_tocompare, fig, corner):
                   #show_titles = True, # 
                   #title_fmt = '.3f',
                   #title_kwargs={"fontsize": 12}, 
-                  color = 'r',
+                  color = 'b',
                   smooth1d = 1.5,
-                  smooth = 1.5,
+                  smooth = 1.8,
                   verbose = True,
                   plot_density = True,
                   plot_datapoints = False,
@@ -203,8 +203,8 @@ def plot_diagonal_1(pred, true):
     diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
     ax.plot(true, pred, 'x', color = 'g', alpha = 0.4)
-    ax.set_xlabel("Model")
-    ax.set_ylabel("Emulator")
+    ax.set_xlabel("Model $\sigma_r$")
+    ax.set_ylabel("Emulator $\sigma_r$")
     return fig, ax
 
 def fit_gaussian(to_fit):
@@ -233,7 +233,7 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
     ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
     ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
-    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes)
+    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 16)
     ax.set_xlabel("z-score")
     ax.legend()
     return fig, ax
@@ -302,10 +302,12 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
         #     model = [map_values[i,qq2] for qq2 in Q2_indeces]
         #     plt.plot(xb, model, ':', alpha = 0.8, color = 'black')
     
-    legend_1 = plt.legend(title = "$Q^2$ (GeV$^2$)", loc = legend1_loc)#, loc='lower left', borderaxespad=0.  )
+    legend_1 = plt.legend(loc = legend1_loc, fontsize = 13)#, loc='lower left', borderaxespad=0.  )
+    legend_1.set_title(title = "$Q^2$ (GeV$^2$)", prop = {'size': 13})
     legend_2 = plt.legend(handles= handles_, 
-                          labels = ["Posterior Mean + 2$\sigma$", "HERA data"], 
-                          loc = "upper left") #,  bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize = 14)
+                          labels = ["Posterior Mean$\pm 2\sigma$", "HERA data"], 
+                          loc = "upper left",
+                          fontsize = 13) #,  bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize = 14)
     ax.add_artist(legend_1)
     ax.add_artist(legend_2)
     ax.set_xlabel("$x_{bj}$")
