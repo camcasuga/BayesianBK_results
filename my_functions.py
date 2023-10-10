@@ -630,8 +630,8 @@ def get_eBK_upsd_downsd(where_bk_folder, rs):
     down_sd = []
 
     bk_interpolators = [ReadBKDipole(where_bk_folder + "/{}.dat".format(i)) for i in range(100)]
-    x0 = 0.01 # 10⁻3
-    xbj = 0.00001 # 10⁻6
+    x0 = 0.01 # 10⁻2
+    xbj = 0.00001 # 10⁻5
     y_int = np.log(x0/xbj)
     for r in rs:
         val_per_r = [bk_interpolators[i](y_int, r) for i in range(100)]
