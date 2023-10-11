@@ -192,17 +192,17 @@ def plot_diagonal(pred, true):
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
 
     for i in range(403):
-        ax.plot(true[:,i], pred[:,i], '.', color = 'g', alpha = 0.5)
+        ax.plot(true[:,i], pred[:,i], '.', color = 'g', alpha = 0.7)
 
     ax.set_xlabel("Model $\sigma_r$")
     ax.set_ylabel("Emulator $\sigma_r$")
     return fig, ax
 
-def plot_diagonal_1(pred, true):
+def plot_diagonal_1(pred, true, color_ = 'g', label_ = None):
     fig, ax = plt.subplots(1,1, figsize = (8,6))
-    diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
+    diag = np.linspace(0.4, np.max(pred) + 0.1, 100)
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
-    ax.plot(true, pred, 'x', color = 'g', alpha = 0.4)
+    ax.plot(true, pred, 'x', color = color_, alpha = 0.7, label = label_)
     ax.set_xlabel("Model $\sigma_r$")
     ax.set_ylabel("Emulator $\sigma_r$")
     return fig, ax
