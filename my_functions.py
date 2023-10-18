@@ -8,7 +8,6 @@ import pandas as pd
 import scipy as sp
 import pickle
 from hankel import HankelTransform
-
 from scipy import interpolate, integrate
 
 def ReadBKDipole(thefile): # 

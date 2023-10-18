@@ -24,7 +24,7 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
-def plot_1corner(theta, param_names):
+def plot_1corner(theta, param_names, color_ = 'b'):
     fig = corner.corner(
         theta,
         labels = param_names,
@@ -33,17 +33,17 @@ def plot_1corner(theta, param_names):
         #show_titles = True, # 
         #title_fmt = '.3f',
         #title_kwargs={"fontsize": 12}, 
-        color = 'b',
+        color = color_,
         bins = 30,
         smooth1d = 1.5,
         smooth = 1.8,
-        verbose = True,
-        plot_density = True,
+        verbose = False,
+        plot_density = False,
         plot_datapoints = False,
         fillcontours = False)
     return fig, corner
 
-def plot_corner_tocompare(theta_tocompare, fig, corner):
+def plot_corner_tocompare(theta_tocompare, fig, corner, color_ = 'r'):
     corner.corner(theta_tocompare,
                   weights= np.ones(len(theta_tocompare))/len(theta_tocompare),
                   fig = fig,
@@ -51,13 +51,15 @@ def plot_corner_tocompare(theta_tocompare, fig, corner):
                   #show_titles = True, # 
                   #title_fmt = '.3f',
                   #title_kwargs={"fontsize": 12}, 
-                  color = 'b',
+                  color = color_,
+                  #hist_kwargs = {'linestyle': '-.'},
+                  #hist2d_kwargs = {'contourf_kwargs': {'linestyle': '--'}},
                   smooth1d = 1.5,
                   smooth = 1.8,
-                  verbose = True,
+                  verbose = False,
                   plot_density = True,
                   plot_datapoints = False,
-                  fillcontours = False);
+                  fillcontours = True,);
 
 def plot_model_vs_exp(q2s, ss, model_values, exp_df, exp_err, title_ = None, splots = 1, correlated = False):
     fig, ax = plt.subplots(1,splots,  figsize = (8,6), sharey = True, sharex = True)
@@ -255,6 +257,7 @@ def display_MAP(paramsamples, param_names, l_bounds, u_bounds, emulators, exp, e
         txt = txt.format(str(MAP.x), param_names[i])
         return display(Math(txt))
 
+# symmetric treatment of uncertainty band
 def get_posterior_mean_and_std(xb, q2, ss, model_values, exp_df):
     xb_region  = (exp_df['xbj'] == xb) & (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
     xb_index = exp_df.index[xb_region].tolist()
@@ -318,18 +321,6 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
     ax.set_title(str(title_))
     return fig, ax
 
-# plt.rcParams.update({'xtick.direction': 'out',
-#                          'ytick.direction': 'out',
-#                          'axes.labelsize': 28,
-#                          'xtick.labelsize': 22,
-#                          'ytick.labelsize': 22,
-#                          'axes.linewidth': 2.0,
-#                          'axes.labelpad': 11.0,
-#                          'xtick.major.size': 10,
-#                          'ytick.major.size': 10,
-#                          'xtick.major.width': 2,
-#                          'ytick.major.width': 2,
-#                          })
 
 def plot_corner(mve_samples, mv5_samples):
     hm = [0.06, 18.9, 7.2, 16.36, 1.0]
