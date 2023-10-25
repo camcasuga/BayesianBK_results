@@ -192,9 +192,10 @@ def plot_diagonal(pred, true):
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     diag = np.linspace(0.0, np.max(pred) + 0.3, 100)
     ax.plot(diag, diag, color = 'black', linestyle = '--', alpha = 0.5)
-
+    # generate 100 random numbers between 0 and 403
+    #ind = np.random.randint(0, 403, 100)
     for i in range(403):
-        ax.plot(true[:,i], pred[:,i], '.', color = 'g', alpha = 0.7)
+        ax.plot(true[:,i], pred[:,i], '.', color = 'g', alpha = 0.7, rasterized=True)
 
     ax.set_xlabel("Model $\sigma_r$")
     ax.set_ylabel("Emulator $\sigma_r$")
@@ -235,7 +236,7 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
     ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
     ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
-    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 16)
+    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 22)
     ax.set_xlabel("z-score")
     ax.legend()
     return fig, ax
@@ -319,7 +320,7 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
     x_major = LogLocator(base = 10.0, numticks = 5)
     ax.xaxis.set_major_locator(x_major)
     ax.set_title(str(title_))
-    return fig, ax
+    return fig, ax, 
 
 
 def plot_corner(mve_samples, mv5_samples):
