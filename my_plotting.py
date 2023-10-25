@@ -306,7 +306,7 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
         #     model = [map_values[i,qq2] for qq2 in Q2_indeces]
         #     plt.plot(xb, model, ':', alpha = 0.8, color = 'black')
     
-    legend_1 = plt.legend(loc = legend1_loc, fontsize = 13)#, loc='lower left', borderaxespad=0.  )
+    legend_1 = plt.legend(loc = legend1_loc, fontsize = 13, reverse = True)#, loc='lower left', borderaxespad=0.  )
     legend_1.set_title(title = "$Q^2$ (GeV$^2$)", prop = {'size': 13})
     legend_2 = plt.legend(handles= handles_, 
                           labels = ["Posterior Mean$\pm 2\sigma$", "HERA data"], 
