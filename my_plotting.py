@@ -258,14 +258,30 @@ def display_MAP(paramsamples, param_names, l_bounds, u_bounds, emulators, exp, e
         txt = txt.format(str(MAP.x), param_names[i])
         return display(Math(txt))
 
-# symmetric treatment of uncertainty band
-def get_posterior_mean_and_std(xb, q2, ss, model_values, exp_df):
+def get_sd(values, mean, which = 'upper'):
+    
+    ''' Returns standard deviation of values above or below mean '''
+
+    if which == 'upper':
+        region = values > mean
+    elif which == 'lower':
+        region = values < mean
+    
+    region_indeces = np.where(region)[0]
+    return np.std(values[region_indeces])
+
+# asymmetric treatment of uncertainty band
+def get_posterior_mean_usd_dsd(xb, q2, ss, model_values, exp_df):
     xb_region  = (exp_df['xbj'] == xb) & (exp_df['Qs2'] == q2) & (exp_df['sqrt(s)'] == ss)
     xb_index = exp_df.index[xb_region].tolist()
     model_values_for_each_xb = model_values[:,xb_index]
-    return np.mean(model_values_for_each_xb, axis = 0), np.std(model_values_for_each_xb, axis = 0)
+    mn = np.mean(model_values_for_each_xb)
+    usd = get_sd(model_values_for_each_xb, mn, which = 'upper')
+    dsd = get_sd(model_values_for_each_xb, mn, which = 'lower')
+    return mn, usd, dsd
 
-def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = None, legend1_loc = "upper right", correlated = False):
+
+def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, n_sigma = 2, title_ = None, legend1_loc = "upper right", correlated = False):
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     mean_line = Line2D([0], [0], color='black')
     mean_patch = mpatches.Patch(color='gray', alpha = 0.8)
@@ -283,16 +299,18 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, title_ = 
         xb = np.array(exp_df_region['xbj'])
 
         sr_mean = []
-        sr_std = []
+        sr_usd = []
+        sr_dsd = []
         for xbj in xb:
-            sr_mean_, sr_std_ = get_posterior_mean_and_std(xbj, q2, ss, model_values, exp_df)
+            sr_mean_, sr_usd_, sr_dsd_ = get_posterior_mean_usd_dsd(xbj, q2, ss, model_values, exp_df)
+            print(sr_mean_, sr_usd_, sr_dsd_)
             sr_mean.append(sr_mean_)
-            sr_std.append(sr_std_)
-        
+            sr_usd.append(sr_usd_)
+            sr_dsd.append(sr_dsd_)
+
         sr_mean = np.array(sr_mean)
-        sr_std = np.array(sr_std)
-        up_std = np.array(sr_mean + 2*sr_std).reshape((-1,))
-        down_std = (sr_mean - 2*sr_std).reshape((-1,))
+        up_std = np.array(sr_mean + n_sigma*np.array(sr_usd)).reshape((-1,))
+        down_std = np.array(sr_mean - n_sigma*np.array(sr_dsd)).reshape((-1,))
         plt_dat = ax.errorbar(xb, dat, yerr = dat_err, color = 'black', fmt = '.', capsize = 3.0)#, label = "Data")  
         
         if j == 0:
@@ -444,3 +462,36 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     axes[3,3].tick_params(which='major', axis = 'y', size = 0)
     fig.align_labels()
     return fig, axes
+
+def plot_pred_mve_vs_mv5(mve_values, mv5_values, x, ylabel, xlabel, n_sigma = 2, title_ = "", legend_loc = "lower right", xlogscale = False, ylogscale = False, linewidth_ = 2):
+    ''' 
+    Plot initial dipole shape or 2DFT 
+    Input: mve_values, a list of mean, upper sd, and lower sd values for the mve model
+           mv5_values, a list of mean, upper sd, and lower sd values for the mv5 model    
+    '''
+    mve_usd = mve_values[0] + n_sigma*mve_values[1]
+    mve_dsd = mve_values[0] - n_sigma*mve_values[2]
+    mv5_usd = mv5_values[0] + n_sigma*mv5_values[1]
+    mv5_dsd = mv5_values[0] - n_sigma*mv5_values[2]
+
+    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    ax.plot(x, mv5_values[0], '--',linewidth = linewidth_, color = "b")
+    ax.fill_between(x, mv5_usd, mv5_dsd, alpha = 0.6, color = "b")
+    ax.plot(x, mve_values[0], '--',linewidth = linewidth_, color = "r")
+    ax.fill_between(x, mve_usd, mve_dsd, alpha = 0.6, color = "r")
+
+    blue_line = Line2D([0], [0], color='b', linestyle='--', linewidth=2)
+    blue_patch = mpatches.Patch(color='b', alpha = 0.6)
+    red_line = Line2D([0], [0], color='r', linestyle='--', linewidth=2)
+    red_patch = mpatches.Patch(color='r', alpha = 0.6)
+    handles_ = [(blue_patch, blue_line),(red_patch, red_line), ]
+    ax.legend(handles= handles_, 
+           labels = ["[$ Q_{s0}^{2}, e_{c}, C^{2}, \sigma_{0}/2, \gamma$]", "[$ Q_{s0}^{2}, e_{c}, C^{2}, \sigma_{0}/2$]"], 
+           loc = legend_loc)
+    ax.set_title(title_)
+    ax.set_xscale("log") if xlogscale else None
+    ax.set_yscale("log") if ylogscale else None
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+
+    return fig, ax
