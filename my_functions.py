@@ -60,8 +60,8 @@ def ReadBKDipole(thefile): #
     
     return interpolator
 
-def my_chi2(data, obs, obs_err, npts = 403):
-    return np.sum(((data - obs)**2)/obs_err**2)/npts
+# def my_chi2(data, obs, obs_err, npts = 403):
+#     return np.sum(((data - obs)**2)/obs_err**2)/npts
 
 def my_cut_df(l_limit, u_limit, basis): # for pandas dataframes only
     indeces = basis.index[(basis >= l_limit) & (basis <= u_limit)].to_list()
@@ -434,17 +434,17 @@ def log_likelihood(theta, emulators, data, data_err, correlated = False):
     ide = np.identity(nkp)
     
     if correlated == False:
-        #predict_err = predict_err.reshape(1,-1)
-        #data_err = data_err.reshape(1,-1)
-        err2 =  (predict_err**2 + data_err**2)
+        #err2 =  (predict_err**2 + data_err**2)
+        err2 =  data_err**2
         ll = np.log(2*np.pi*err2) + ((data - predict)**2) / err2
         return -.5*np.sum(ll)
     
     if correlated == True:
-        err2 = predict_err + data_err
+        #err2 = predict_err + data_err
+        err2 = data_err
 
-        if np.allclose(np.linalg.inv(err2) @ err2, ide) == False:
-            raise ValueError('E^{-1}E is not equal to I')
+        # if np.allclose(np.linalg.inv(err2) @ err2, ide) == False:
+        #     raise ValueError('E^{-1}E is not equal to I')
 
         delta_y = (data - predict).reshape(403,1)
         B = np.dot(np.linalg.inv(err2), delta_y) 
@@ -452,6 +452,31 @@ def log_likelihood(theta, emulators, data, data_err, correlated = False):
         ll = np.dot(delta_y.T, B) + err2_det # removed log(2*pi)
         
         return -.5*ll
+    
+def get_chi2(theta, emulators, data, data_err, correlated = False):
+
+    ''' Function that returns the log of the likelihood '''
+
+    theta_reshaped = theta.reshape(1,-1)
+    predict, predict_err = return_predictions(emulators, theta_reshaped, correlated = correlated)
+    nkp = np.shape(emulators[2].scale_)[0]
+    ide = np.identity(nkp)
+    p = np.shape(theta)[1]
+    
+    if correlated == False:
+        err2 = data_err**2 # when uncorrelated, the exp uncertainties are calculated as standard deviations
+        ll = ((data - predict)**2) / err2
+        return np.sum(ll)/(nkp - p)
+    
+    if correlated == True:
+        err2 = data_err
+        if np.allclose(np.linalg.inv(err2) @ err2, ide) == False:
+            raise ValueError('E^{-1}E is not equal to I')
+
+        delta_y = (data - predict).reshape(nkp,1)
+        B = np.dot(np.linalg.inv(err2), delta_y) 
+        ll = np.dot(delta_y.T, B) 
+        return ll/(nkp-p)
 
 
 def log_flat_prior(theta, l_bounds, u_bounds):

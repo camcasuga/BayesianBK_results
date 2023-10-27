@@ -303,7 +303,6 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, n_sigma =
         sr_dsd = []
         for xbj in xb:
             sr_mean_, sr_usd_, sr_dsd_ = get_posterior_mean_usd_dsd(xbj, q2, ss, model_values, exp_df)
-            print(sr_mean_, sr_usd_, sr_dsd_)
             sr_mean.append(sr_mean_)
             sr_usd.append(sr_usd_)
             sr_dsd.append(sr_dsd_)
@@ -360,7 +359,7 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
         axes[i,j].tick_params(axis='both', 
                               which='major',
                               direction = 'out', 
-                              labelsize = 18, 
+                              labelsize = 25, 
                               size = 8, 
                               width = 2.5, 
                               pad = 1.0,
@@ -437,8 +436,8 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     axes[0,0].tick_params(which='major', axis = 'y', size = 0)
 
     for i in range(1,5):
-        axes[i,0].set_ylabel(param_names[i], fontsize = 24) #if ((i != 0) & (i != 4)) else axes[i,0].set_ylabel(param_names[i], fontsize = 24, labelpad = 10)
-        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 24) #if i != 1 else axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 24, labelpad = 10)
+        axes[i,0].set_ylabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[i,0].set_ylabel(param_names[i], fontsize = 24, labelpad = 10)
+        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 25) #if i != 1 else axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 24, labelpad = 10)
 
         #axes[i-1,3].set_yticklabels([])
         axes[i-1,3].yaxis.set_label_position("right")
@@ -449,8 +448,8 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     
     # manually removing and arranging tick positions and axis labels
     for i in range(5):
-        axes[4,i].set_xlabel(param_names[i], fontsize = 24) #if ((i != 0) & (i != 4)) else axes[4,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
-        axes[0,i].set_xlabel(param_names[i], fontsize = 24) #if ((i != 0) & (i != 4)) else axes[0,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
+        axes[4,i].set_xlabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[4,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
+        axes[0,i].set_xlabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[0,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
         axes[0,i].xaxis.set_label_position("top")
         axes[0,i].xaxis.tick_top()
         for j in range(1,4):
