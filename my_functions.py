@@ -558,7 +558,7 @@ def dipA(r, A, Qs02, sigma0_2, e_c): # dipole nucleus
     N = 1 - np.exp(-B/4 * np.log(C))
     return N
 
-def get_2DFT_pA(Qs02s, e_cs, k): 
+def get_2DFT_pA(Qs02s, e_cs, k, A): 
     
     ''' Function that returns 2D Fourier transform of dipole amplitude for pA '''
 
@@ -666,3 +666,23 @@ def get_eBK_upsd_downsd(where_bk_folder, rs):
         down_sd.append(get_sd(val_per_r, val_per_r_mean, which = 'lower'))
     
     return np.array(mean), np.array(up_sd), np.array(down_sd)
+
+def get_rpa_upsd_downsd(where_rpa):
+    x_q2dep = 0.001 # for info only
+    Q2_range = np.geomspace(1, 100, 50) # for info only
+    #where_rpa = "rpa_{}/q2dep/".format(model)
+    rpa = []
+    for i in range(100):
+        rpa.append(np.loadtxt(where_rpa + "{}.dat".format(i)))
+    
+    rpa = np.array(rpa)
+    rpa_mean = [] #np.mean(rpa_q2, axis = 0)
+    rpa_dsd = np.zeros(50)
+    rpa_usd = np.zeros(50)
+    for i in range(50):
+        mn = np.mean(rpa[:,i])
+        rpa_mean.append(np.mean(mn))
+        rpa_usd[i] = get_sd(rpa[:,i], mn, which = 'upper')
+        rpa_dsd[i] = get_sd(rpa[:,i], mn, which = 'lower')
+
+    return np.array(rpa_mean), np.array(rpa_usd), np.array(rpa_dsd)

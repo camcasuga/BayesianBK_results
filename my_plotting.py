@@ -462,7 +462,7 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     fig.align_labels()
     return fig, axes
 
-def plot_pred_mve_vs_mv5(mve_values, mv5_values, x, ylabel, xlabel, n_sigma = 2, title_ = "", legend_loc = "lower right", xlogscale = False, ylogscale = False, linewidth_ = 2):
+def plot_pred_mve_vs_mv5(fig, ax, mve_values, mv5_values, x, ylabel = None, xlabel = None, n_sigma = 2, title_ = "", legend_loc = "lower right", xlogscale = False, ylogscale = False, linewidth_ = 2):
     ''' 
     Plot initial dipole shape or 2DFT 
     Input: mve_values, a list of mean, upper sd, and lower sd values for the mve model
@@ -473,7 +473,7 @@ def plot_pred_mve_vs_mv5(mve_values, mv5_values, x, ylabel, xlabel, n_sigma = 2,
     mv5_usd = mv5_values[0] + n_sigma*mv5_values[1]
     mv5_dsd = mv5_values[0] - n_sigma*mv5_values[2]
 
-    fig, ax = plt.subplots(1,1, figsize = (8,6))
+    #fig, ax = plt.subplots(1,1, figsize = (8,6))
     ax.plot(x, mv5_values[0], '--',linewidth = linewidth_, color = "b")
     ax.fill_between(x, mv5_usd, mv5_dsd, alpha = 0.6, color = "b")
     ax.plot(x, mve_values[0], '--',linewidth = linewidth_, color = "r")
