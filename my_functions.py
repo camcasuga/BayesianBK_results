@@ -466,7 +466,7 @@ def get_chi2(theta, emulators, data, data_err, correlated = False):
     if correlated == False:
         err2 = data_err**2 # when uncorrelated, the exp uncertainties are calculated as standard deviations
         ll = ((data - predict)**2) / err2
-        return np.sum(ll)/(nkp - p)
+        return (np.sum(ll)/(nkp - p)).reshape(1)[0]
     
     if correlated == True:
         err2 = data_err
@@ -476,7 +476,7 @@ def get_chi2(theta, emulators, data, data_err, correlated = False):
         delta_y = (data - predict).reshape(nkp,1)
         B = np.dot(np.linalg.inv(err2), delta_y) 
         ll = np.dot(delta_y.T, B) 
-        return ll/(nkp-p)
+        return (ll/(nkp-p)).reshape(1)[0]
 
 
 def log_flat_prior(theta, l_bounds, u_bounds):
@@ -670,7 +670,6 @@ def get_eBK_upsd_downsd(where_bk_folder, rs):
 def get_rpa_upsd_downsd(where_rpa):
     x_q2dep = 0.001 # for info only
     Q2_range = np.geomspace(1, 100, 50) # for info only
-    #where_rpa = "rpa_{}/q2dep/".format(model)
     rpa = []
     for i in range(100):
         rpa.append(np.loadtxt(where_rpa + "{}.dat".format(i)))

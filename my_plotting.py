@@ -215,7 +215,7 @@ def fit_gaussian(to_fit):
     mu, std = norm.fit(to_fit)
     x = np.linspace(mu - 3*std, mu + 3*std, 100)
     gauss = norm.pdf(x, mu, std)
-    return x, gauss
+    return x, gauss, mu, std
 
 def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95): 
     from scipy.stats import norm
@@ -223,7 +223,7 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     z = np.array([(pred[:,kp] - true[:,kp])/sd[:,kp] for kp in range(403)])
 
     # fit gaussian to z
-    x_fit, gauss_fit = fit_gaussian(z.flatten())
+    x_fit, gauss_fit, mu_fit, sd_fit = fit_gaussian(z.flatten())
 
     # target gaussian
     mu = 0
@@ -236,19 +236,22 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
     ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
     ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
-    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 22)
+    #ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 22)
+    ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(mu_fit, sd_fit), transform=ax.transAxes, fontsize = 22)
     ax.set_xlabel("z-score")
     ax.legend(fontsize = 20)
     return fig, ax
 
 def display_median(paramsamples, param_names):
-
     for i in range(len(param_names)):
         mcmc = np.percentile(paramsamples[:, i], [16, 50, 84])
         q = np.diff(mcmc)
-        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
-        txt = txt.format(mcmc[1], q[0], q[1], param_names[i])
-        return display(Math(txt))
+        txt1 = r"{}"
+        txt1 = txt1.format(param_names[i])
+        txt2 = r" = ${0:.3f}_{{-{1:.3f}}}^{{+{2:.3f}}}$"
+        txt2 = txt2.format(mcmc[1], q[0], q[1], param_names[i])
+        display(Math(txt1 + txt2))
+    return
 
 def display_MAP(paramsamples, param_names, l_bounds, u_bounds, emulators, exp, exp_err, correlated = False):
     posterior_median = np.median(paramsamples, axis = 0)
@@ -331,7 +334,7 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, n_sigma =
                           fontsize = 13) #,  bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize = 14)
     ax.add_artist(legend_1)
     ax.add_artist(legend_2)
-    ax.set_xlabel("$x_{bj}$")
+    ax.set_xlabel("$x_{Bj}$")
     ax.set_ylabel("$\sigma_r$")
     ax.set_xscale('log')
     x_major = LogLocator(base = 10.0, numticks = 5)
@@ -474,14 +477,14 @@ def plot_pred_mve_vs_mv5(fig, ax, mve_values, mv5_values, x, ylabel = None, xlab
     mv5_dsd = mv5_values[0] - n_sigma*mv5_values[2]
 
     #fig, ax = plt.subplots(1,1, figsize = (8,6))
-    ax.plot(x, mv5_values[0], '--',linewidth = linewidth_, color = "b")
+    ax.plot(x, mv5_values[0], '--',linewidth = linewidth_, color = "#0b559f")
     ax.fill_between(x, mv5_usd, mv5_dsd, alpha = 0.6, color = "b")
-    ax.plot(x, mve_values[0], '--',linewidth = linewidth_, color = "r")
+    ax.plot(x, mve_values[0], '--',linewidth = linewidth_, color = '#c5171c')
     ax.fill_between(x, mve_usd, mve_dsd, alpha = 0.6, color = "r")
 
-    blue_line = Line2D([0], [0], color='b', linestyle='--', linewidth=2)
+    blue_line = Line2D([0], [0], color='#0b559f', linestyle='--', linewidth=1.5)
     blue_patch = mpatches.Patch(color='b', alpha = 0.6)
-    red_line = Line2D([0], [0], color='r', linestyle='--', linewidth=2)
+    red_line = Line2D([0], [0], color='#c5171c', linestyle='--', linewidth=1.5)
     red_patch = mpatches.Patch(color='r', alpha = 0.6)
     handles_ = [(blue_patch, blue_line),(red_patch, red_line), ]
     ax.legend(handles= handles_, 
