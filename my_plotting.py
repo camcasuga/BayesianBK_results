@@ -216,6 +216,7 @@ def fit_gaussian(to_fit):
     x = np.linspace(mu - 3*std, mu + 3*std, 100)
     gauss = norm.pdf(x, mu, std)
     return x, gauss, mu, std
+    
 
 def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95): 
     from scipy.stats import norm
