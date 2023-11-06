@@ -246,14 +246,18 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     gauss = norm.pdf(x, mu, sigma)
     print("norm_fit = ", norm_fit)
 
+
+    fit_func = lambda p, x: p[0]*np.exp(-0.5*(( x - p[1] )/ p[2] )**2)
+    target_gauss = fit_func([norm_fit, mu, variance], x)
+
     # plot
-    ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
+    ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7)
     ax.plot(z_bincenters, y, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
-    ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
+    #ax.plot(x, target_gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
     #ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 22)
     ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(mu_fit, sd_fit), transform=ax.transAxes, fontsize = 22)
     ax.set_xlabel("z-score")
-    ax.legend(fontsize = 20)
+    #ax.legend(fontsize = 20)
     return fig, ax
 
 def display_median(paramsamples, param_names):
