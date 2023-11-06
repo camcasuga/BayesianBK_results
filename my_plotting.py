@@ -216,15 +216,27 @@ def fit_gaussian(to_fit):
     x = np.linspace(mu - 3*std, mu + 3*std, 100)
     gauss = norm.pdf(x, mu, std)
     return x, gauss, mu, std
+
+
+def fit_gaussian_ls(x, y):
+    from scipy.optimize import leastsq
+    fit_func = lambda p, x: p[0]*np.exp(-0.5*(( x - p[1] )/ p[2] )**2)
+    err_func = lambda p, x, y: (y - fit_func(p, x))
+    init = [1.0, 0.0, 1.0]
+    out = leastsq(err_func, init, args=(x, y))
+    y = fit_func(out[0], x)
+    return out[0][0], out[0][1], out[0][2] , y
     
 
 def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95): 
     from scipy.stats import norm
     fig, ax = plt.subplots(1,1, figsize = (8,6))
     z = np.array([(pred[:,kp] - true[:,kp])/sd[:,kp] for kp in range(403)])
+    z_hist, z_bins = np.histogram(z.flatten(), bins=bins_, density=True)
+    z_bincenters = np.mean(np.vstack([z_bins[0:-1],z_bins[1:]]), axis=0)
 
     # fit gaussian to z
-    x_fit, gauss_fit, mu_fit, sd_fit = fit_gaussian(z.flatten())
+    norm_fit, mu_fit, sd_fit, y = fit_gaussian_ls(z_bincenters, z_hist)
 
     # target gaussian
     mu = 0
@@ -232,10 +244,11 @@ def plot_zscore(pred, true, sd, bins_ = 30, text_x = 0.05, text_y = 0.95):
     sigma = np.sqrt(variance)
     x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
     gauss = norm.pdf(x, mu, sigma)
+    print("norm_fit = ", norm_fit)
 
     # plot
     ax.hist(z.flatten(), bins = bins_, density = True, color = 'g', alpha = 0.7, label = "Emulator")
-    ax.plot(x_fit, gauss_fit, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
+    ax.plot(z_bincenters, y, color = 'g', alpha = 0.7, linewidth = 2, linestyle = '--')
     ax.plot(x, gauss, color = 'black', linewidth = 2, linestyle = '--', label = "Target")
     #ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(np.mean(z.flatten()), np.std(z.flatten())), transform=ax.transAxes, fontsize = 22)
     ax.text(text_x, text_y, "Mean = {:.3f}\nSd = {:.3f}".format(mu_fit, sd_fit), transform=ax.transAxes, fontsize = 22)
