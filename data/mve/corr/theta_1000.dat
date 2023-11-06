@@ -1,3 +1,7 @@
+# 1000 Random Parameter vector samples from Bayesian Sampling.
+# Parametrization of the BK Initial Condition is defined in Equation (10, 11)
+# Set-up: 4-parameter case, gamma = 1, with correlated systematic uncertainties consideration
+# Q_{s,0}^2              e_c                      C^2                      sigma0/2
 6.476188580286028340e-02 2.839450049727545888e+01 4.394640768259918673e+00 1.395604442273927148e+01
 5.614812084387688779e-02 5.789147852533820782e+01 4.038488226369495671e+00 1.402084882497795881e+01
 6.824287509492515946e-02 1.477200026002845945e+01 7.782742835338627430e+00 1.505742009837280193e+01
