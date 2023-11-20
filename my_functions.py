@@ -464,7 +464,7 @@ def get_chi2(theta, emulators, data, data_err, correlated = False):
     p = np.shape(theta)[1]
     
     if correlated == False:
-        err2 = data_err**2 # when uncorrelated, the exp uncertainties are calculated as standard deviations
+        err2 = data_err**2 # when uncorrelated, the exp uncertainties are standard deviations
         ll = ((data - predict)**2) / err2
         return (np.sum(ll)/(nkp - p)).reshape(1)[0]
     
@@ -617,20 +617,24 @@ def get_sd(values, mean, which = 'upper'):
     region_indeces = np.where(region)[0]
     return np.std(values[region_indeces])
 
-def get_2DFT_upsd_downsd(Qs02s, gammas, e_cs, k):
-
+def get_2DFT_upsd_downsd(Qs02s, gammas, e_cs, sigma02s, k):
+    
     ''' Function that returns 2DFT (pp) mean along with the upper and lower standard deviation '''
+    
     ht = HankelTransform(nu = 0, N = 1000, h = 0.001)
+    conv_mbGeV2 = 2.56819
     sp_mean = []
     sp_up_sd = []
     sp_down_sd = []
     for i in k:
         sp_per_k = [ht.transform(lambda r: 1 - dipp(r, Qs02s[j], gammas[j], e_cs[j]), i, ret_err=False) for j in range(len(Qs02s))]
-        sp_per_k = np.array(sp_per_k)
-        sp_per_k_mean = np.mean(sp_per_k)
-        sp_mean.append(sp_per_k_mean)
-        sp_up_sd.append(get_sd(sp_per_k, sp_per_k_mean, which = 'upper'))
-        sp_down_sd.append(get_sd(sp_per_k, sp_per_k_mean, which = 'lower'))
+        #sp_sigma02_per_k = np.array(sp_per_k) * sigma02s
+        sps_per_k = [conv_mbGeV2 * sigma02s[j] * sp_per_k[j] for j in range(len(Qs02s))]
+        sps_per_k = np.array(sps_per_k)
+        sps_per_k_mean = np.mean(sps_per_k)
+        sp_mean.append(sps_per_k_mean)
+        sp_up_sd.append(get_sd(sps_per_k, sps_per_k_mean, which = 'upper'))
+        sp_down_sd.append(get_sd(sps_per_k, sps_per_k_mean, which = 'lower'))
     
     return np.array(sp_mean), np.array(sp_up_sd), np.array(sp_down_sd)
 
