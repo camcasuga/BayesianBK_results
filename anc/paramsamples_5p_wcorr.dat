@@ -1,7 +1,7 @@
 # 1000 Random Parameter vectors sampled from the Bayesian Posterior.
-# Parametrization of the BK Initial Condition is defined in Equation (10, 11)
-# Set-up: 5-parameter case, WITH consideration of correlated systematic uncertainties 
-# Q_{s,0}^2              gamma                    e_c                      C^2                      sigma0/2
+# Parametrization of the BK Initial Condition is defined in Equations (10, 11)
+# Set-up: 5-parameter case, including correlations among systematic uncertainties 
+# Q_{s,0}^2 [GeV^2]      gamma                    e_c                      C^2                      sigma0/2 [mb]
 6.428815267364167141e-02 9.995289975625184509e-01 2.261206373415920012e+01 5.657419985710149035e+00 1.453071310038427555e+01
 1.007998178217334867e-01 1.037806530166931474e+00 5.612722059328335789e+00 5.780884218267257957e+00 1.434374217676450769e+01
 5.852807902228924358e-02 1.002024289352870579e+00 4.210658817443058410e+01 4.925679064298393861e+00 1.427130323926266264e+01

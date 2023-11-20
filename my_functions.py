@@ -91,6 +91,7 @@ def get_cor_columns():
     list_proc = ['proc_nrl', 'proc_tb21', 'proc_tb22', 'proc_tb23', 'proc_tb24', 'proc_gp', 'proc_had']
     for i in range(163,170):
         cor_sys.append(list_proc[i-163])
+
     return cor_sys
 
 # construct error covariance matrix from data uncertainties: systematic + statistical and correlated
@@ -121,7 +122,7 @@ def load_exp(filename, Q2_llimit = 2.0, Q2_ulimit = 50.0, correlated = False):
                 exp_cov * 0.01 * exp if correlated = True, numpy array of covariance matrix with shape nkp x nkp
                 xbj, numpy array of xbj values'''
 
-    exp_df = pd.DataFrame(pd.read_csv(filename))
+    exp_df = pd.DataFrame(pd.read_csv(filename)) # file should have relative uncertainties in percent not absolute
     Q2_region = (exp_df['Qs2'] >= Q2_llimit) & (exp_df['Qs2'] <= Q2_ulimit) # cuts of Q2 region
     exp_df = exp_df[Q2_region]
     exp = np.array(exp_df['sigma_r'])
@@ -130,16 +131,14 @@ def load_exp(filename, Q2_llimit = 2.0, Q2_ulimit = 50.0, correlated = False):
     # convert all uncertainties to absolute uncertainties
     exp_df['stat'] = exp_df['stat'] * 0.01 * exp
     exp_df['uncor'] = exp_df['uncor'] * 0.01 * exp
-    exp_df['ignore'] = exp_df['ignore'] * 0.01 * exp
+    exp_df['ignore'] = exp_df['ignore'] * 0.01 * exp # total correlated uncertainties without procedural
     exp_df[get_cor_columns()] = exp_df[get_cor_columns()] * 0.01 * exp[..., None] 
 
     # add total uncorrelated and correlated uncertainties column to dataframe
     exp_df['uncor_tot'] = np.sqrt((exp_df['stat'])**2 + (exp_df['uncor'])**2) # total uncorrelated errors
     exp_df['cor_wo_proc'] = np.sqrt((exp_df['ignore'])**2 - (exp_df['uncor_tot'])**2) # total correlated uncertainties without procedural
     cor_err = np.array(exp_df[get_cor_columns()])
-    exp_df['cor_tot'] = np.sqrt(np.sum(cor_err**2, axis = 1)) # total correlated uncertainties
-    # cov = construct_cov(exp_df)
-    # sd = np.sqrt(np.diagonal(cov))
+    exp_df['cor_tot'] = np.sqrt(np.sum(cor_err**2, axis = 1)) # total correlated uncertainties 
     if correlated == False:
         #exp_err = np.sqrt((exp_df['ignore'].values)**2)
         # to include procedural: 
@@ -153,7 +152,6 @@ def load_training_data(train_file, theta_file):
     train = np.loadtxt(train_file)
     theta = np.vstack(np.loadtxt(theta_file, unpack = True)).T # makes each row a single array = 1 parameter vector
     return train, theta
-
 
 #  nuisance parameters
 def get_A(exp_df):
@@ -440,8 +438,8 @@ def log_likelihood(theta, emulators, data, data_err, correlated = False):
         return -.5*np.sum(ll)
     
     if correlated == True:
-        #err2 = predict_err + data_err
-        err2 = data_err
+        err2 = predict_err + data_err
+        #err2 = data_err
 
         # if np.allclose(np.linalg.inv(err2) @ err2, ide) == False:
         #     raise ValueError('E^{-1}E is not equal to I')
@@ -453,15 +451,13 @@ def log_likelihood(theta, emulators, data, data_err, correlated = False):
         
         return -.5*ll
     
-def get_chi2(theta, emulators, data, data_err, correlated = False):
+def get_chi2(predict, data, data_err, correlated = False, model = 'mve'):
 
     ''' Function that returns the log of the likelihood '''
 
-    theta_reshaped = theta.reshape(1,-1)
-    predict, predict_err = return_predictions(emulators, theta_reshaped, correlated = correlated)
-    nkp = np.shape(emulators[2].scale_)[0]
+    nkp = 403 #np.shape(emulators[2].scale_)[0]
     ide = np.identity(nkp)
-    p = np.shape(theta)[1]
+    p = 4 if model == 'mve' else 5
     
     if correlated == False:
         err2 = data_err**2 # when uncorrelated, the exp uncertainties are standard deviations
@@ -476,7 +472,7 @@ def get_chi2(theta, emulators, data, data_err, correlated = False):
         delta_y = (data - predict).reshape(nkp,1)
         B = np.dot(np.linalg.inv(err2), delta_y) 
         ll = np.dot(delta_y.T, B) 
-        return (ll/(nkp-p)).reshape(1)[0]
+        return (ll/(nkp - p)).reshape(1)[0]
 
 
 def log_flat_prior(theta, l_bounds, u_bounds):
