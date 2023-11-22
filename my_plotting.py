@@ -11,7 +11,6 @@ import itertools
 from scipy.optimize import minimize
 from IPython.display import display, Math
 
-#colors  = ['orange', 'purple', 'yellow', 'pink', 'red','cyan', 'maroon', 'teal', 'green']
 colors = sns.color_palette("Paired")
 plt.rcdefaults()
 plt.rcParams.update({'xtick.labelsize': 16,
@@ -20,7 +19,6 @@ plt.rcParams.update({'xtick.labelsize': 16,
                      'axes.titlesize': 40,
                      'legend.fontsize': 14,
                      'legend.title_fontsize': 14,
-                     #'figure.autolayout': True,
                      'xtick.direction': 'in',
                      'ytick.direction': 'in',})
 
@@ -29,10 +27,6 @@ def plot_1corner(theta, param_names, color_ = 'b'):
         theta,
         labels = param_names,
         weights= np.ones(len(theta))/len(theta),
-        #quantiles=[0.0, 0.5, 1.00],
-        #show_titles = True, # 
-        #title_fmt = '.3f',
-        #title_kwargs={"fontsize": 12}, 
         color = color_,
         bins = 30,
         smooth1d = 1.5,
@@ -362,13 +356,18 @@ def plot_posterior_mean_and_ub(q2s, ss, model_values, exp_df, exp_err, n_sigma =
 
 
 def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
+
+    from scipy.ndimage import gaussian_filter
+    import corner
+
     hm = [0.06, 18.9, 7.2, 16.36, 1.0]
     param_names = [r"$Q_{s,0}^{2}$ [GeV²]",
                r"$e_c$",
                r"$C^{2}$",
                r"$\sigma_0/2$ [mb]",
                r"$\gamma$",] 
-    from scipy.ndimage import gaussian_filter
+    
+    # plot layout settings
     fig_kw = {'linewidth': 2.0}
     fig, axes = plt.subplots(5,5, 
                              figsize = (18,18),
@@ -388,13 +387,14 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
         axes[i,j].spines[['left', 'right', 'top', 'bottom']].set_linewidth(2.0)
 
 
-    # axes limits
+    # axes limits and histogram parameters
     range0 = [0.045, 0.11]
     range1 = [2.0, 60.0]
     range2 = [2.0, 8.5]
     range3 = [11.8, 16.6]
     range4 = [0.95, 1.08]
     xranges = np.array([range0, range1, range2, range3, range4])
+
     hist_plot_kwargs= {'linewidth': 2.5, 'drawstyle': 'steps-mid'}
     hist_kwargs = {'density': True,
                    'bins': 30}
@@ -403,9 +403,11 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
                      "plot_datapoints" : False,
                      "plot_density":True,}
     
+    # make diagonal plots
     for i in range(5):
         axes[i,i].tick_params(which='major', labelrotation=35)
-        if i == 4:
+        
+        if i == 4: # for the unique gamma parameter plot
             n_mv5, bins_mv5 = np.histogram(mv5_samples[:,i], **hist_kwargs)
             n_mv5 = gaussian_filter(n_mv5, sigma = 1.5)
             x0 = np.array(list(zip(bins_mv5[:-1], bins_mv5[1:]))).flatten()
@@ -431,6 +433,7 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
             axes[i,i].set_xlim(xranges[i])
             axes[i,i].set_ylim([0.0 , None])
 
+    # make off-diagonal plots
         for j in range(i):
             corner.hist2d(mve_samples[:,i], mve_samples[:,j], ax = axes[j,i], color = color_mve, **hist2d_kwargs, contour_kwargs = {'linewidths':2.0})
             axes[j,i].set_xlim(xranges[i])
@@ -440,7 +443,8 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
             axes[i,j].set_xlim(xranges[j])
             axes[i,j].set_ylim(xranges[i])
             axes[i,j].tick_params(which='major', labelrotation=35)
-        
+
+    # plot vertical lines representing the MVe values from 1309.6963    
     for i in range(5):
         axes[i,i].axvline(hm[i], color = 'g', linestyle = ':', linewidth = 3.0)    
     
@@ -449,6 +453,7 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
             axes[j,i].set_yticklabels([])
             axes[j,i].tick_params(which='major', axis = 'y', size = 0)
 
+    # Manual removal of tick labels
     axes[4,3].set_yticklabels([])
     axes[4,3].tick_params(which='major', axis = 'y', size = 0)
     axes[4,4].set_yticklabels([])
@@ -456,21 +461,18 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     axes[0,0].set_yticklabels([])
     axes[0,0].tick_params(which='major', axis = 'y', size = 0)
 
+    # Manual setting of y axis labels and position to the right (for the 4 parameter case) 
     for i in range(1,5):
-        axes[i,0].set_ylabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[i,0].set_ylabel(param_names[i], fontsize = 24, labelpad = 10)
-        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 25) #if i != 1 else axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 24, labelpad = 10)
-
-        #axes[i-1,3].set_yticklabels([])
+        axes[i,0].set_ylabel(param_names[i], fontsize = 25) 
+        axes[i-1,3].set_ylabel(param_names[i-1], fontsize = 25) 
         axes[i-1,3].yaxis.set_label_position("right")
         axes[i-1,3].yaxis.tick_right()
-        #axes[0,3].set_ylabel(param_names[0])
-        #axes[0,3].yaxis.set_label_position("right")
         fig.delaxes(axes[i-1,4])
     
-    # manually removing and arranging tick positions and axis labels
+    # Manual setting of x axis labels and position to the top (for the 4 parameter case) 
     for i in range(5):
-        axes[4,i].set_xlabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[4,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
-        axes[0,i].set_xlabel(param_names[i], fontsize = 25) #if ((i != 0) & (i != 4)) else axes[0,i].set_xlabel(param_names[i], fontsize = 24, labelpad = 10)
+        axes[4,i].set_xlabel(param_names[i], fontsize = 25) 
+        axes[0,i].set_xlabel(param_names[i], fontsize = 25) 
         axes[0,i].xaxis.set_label_position("top")
         axes[0,i].xaxis.tick_top()
         for j in range(1,4):
@@ -480,7 +482,7 @@ def plot_corner(mve_samples, mv5_samples, color_mv5 = 'b', color_mve = 'r'):
     axes[3,3].set_ylabel("")
     axes[3,3].set_yticklabels([])
     axes[3,3].tick_params(which='major', axis = 'y', size = 0)
-    fig.align_labels()
+    fig.align_labels() # align axes label padding
     return fig, axes
 
 def plot_pred_mve_vs_mv5(fig, ax, mve_values, mv5_values, x, ylabel = None, xlabel = None, n_sigma = 2, title_ = "", legend_loc = "lower right", xlogscale = False, ylogscale = False, linewidth_ = 2):

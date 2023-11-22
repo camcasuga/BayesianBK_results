@@ -264,8 +264,8 @@ def train_PCA_GPE(training_data,
     training_data_PCAd = pca.fit_transform(training_data_scaled)
 
     if show_var == True:
-        print('Explained variance ratio: %s' % str(pca.explained_variance_ratio_))
-        print('Sum of explained variance ratio: %s' % str(np.sum(pca.explained_variance_ratio_)))
+        #print('Explained variance ratio: {0}'.format(str(pca.explained_variance_ratio_)))
+        print('Sum of explained variance ratio for {0} components: {1}'.format(primary_components, str(np.sum(pca.explained_variance_ratio_))))
 
     # Train and optimize kernel hyperparameter of GPE for each principal component
     gpes = []
