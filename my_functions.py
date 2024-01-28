@@ -9,6 +9,7 @@ import scipy as sp
 import pickle
 from hankel import HankelTransform
 from scipy import interpolate, integrate
+from scipy.optimize import newton
 
 def ReadBKDipole(thefile):  
 
@@ -625,3 +626,33 @@ def get_rpa_upsd_downsd(where_rpa):
         rpa_dsd[i] = get_sd(rpa[:,i], mn, which = 'lower')
 
     return np.array(rpa_mean), np.array(rpa_usd), np.array(rpa_dsd)
+
+def solve_r_qsofr(x, qs02, gamma, e_c):
+    lambda_qcd = 0.241
+    A = qs02**(gamma)/4
+    B = 1/lambda_qcd
+    C = np.exp(1)*e_c
+    func = A*x**(2*gamma) * np.log(B/x + C) - 1/2
+    return func
+
+def solve_r_qsofr_evolved(r, bk_interp, x):
+    x0 = 0.01 # 10⁻2
+    #xbj = 0.00001 # 10⁻5
+    y_int = np.log(x0/x)
+    func = bk_interp(y_int, r) - (1 - np.exp(-1/2))
+    return func
+
+def get_qs2ofx(where_bk, xs):
+    bk_interpolators = [ReadBKDipole(where_bk + "/{}.dat".format(i)) for i in range(100)]
+    qs2_mean = []
+    qs2_usd = []
+    qs2_dsd = []
+    for x in xs:
+        val_per_x = [newton(solve_r_qsofr_evolved, 1.0, args = (bk_interpolators[i], x)) for i in range(100)]
+        val_per_x = np.array(val_per_x)
+        qs2 = 2/val_per_x**2
+        mean = np.mean(qs2)
+        qs2_mean.append(mean)
+        qs2_usd.append(get_sd(qs2, mean, which = 'upper'))
+        qs2_dsd.append(get_sd(qs2, mean, which = 'lower'))
+    return np.array(qs2_mean), np.array(qs2_usd), np.array(qs2_dsd)
